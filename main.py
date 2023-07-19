@@ -2,6 +2,8 @@ import os
 from apify_client import ApifyClient
 from apify import YelpReviewsInterface
 
+from graph.connect import GraphConnection
+
 # Initialize the ApifyClient with your API token
 apify_client = ApifyClient(os.environ["APIFY_API_TOKEN"])
 
@@ -12,4 +14,8 @@ structured_reviews = yelp_reviews_interface.get(
     review_limit=2,
 )
 
-print(structured_reviews)
+# Add reviews to graph if they don't already exist
+graph = GraphConnection()
+graph.add_reviews(structured_reviews)
+
+print("Done")

@@ -7,7 +7,8 @@ from apify_client import ApifyClient
 from typing import List
 from pydantic import BaseModel
 
-from graph import Review, ReviewSource, RATING_MAPPING
+from graph.data.misc import RATING_MAPPING
+from graph.data.reviews import Review, ReviewSource
 
 
 class ApifyYelpReview(BaseModel):
@@ -33,7 +34,7 @@ class YelpReviewsInterface:
 
         # Init Outputs
         self.raw_reviews_for_locations: list[ApifyYelpLocation] = []
-        self.structured_results: dict[str, list[Review]] = {}
+        self.structured_reviews: list[Review] = []
 
     def _prepare_for_call(self, yelp_direct_url: str, review_limit: int) -> None:
         self.yelp_direct_urls = [yelp_direct_url]
@@ -60,23 +61,20 @@ class YelpReviewsInterface:
         self.raw_reviews_for_locations = [ApifyYelpLocation.parse_obj(item) for item in items]  # type: ignore
 
     def _structure_results(self) -> None:
-        for raw_location in self.raw_reviews_for_locations:
-            reviews: list[Review] = []
+        raw_location = self.raw_reviews_for_locations[0]  # Supports 1
 
-            for raw_review in raw_location.reviews:
-                review = Review(
-                    date=raw_review.date,
-                    rating=RATING_MAPPING[raw_review.rating],
-                    text=raw_review.text,
-                    source=ReviewSource.YELP,
-                    source_review_id=raw_review.id,
-                )
+        for raw_review in raw_location.reviews:
+            review = Review(
+                date=raw_review.date,
+                rating=RATING_MAPPING[raw_review.rating],
+                text=raw_review.text,
+                source=ReviewSource.YELP,
+                source_review_id=raw_review.id,
+            )
 
-                reviews.append(review)
+            self.structured_reviews.append(review)
 
-            self.structured_results[raw_location.directUrl] = reviews
-
-    def get(self, yelp_direct_url: str, review_limit: int) -> dict[str, list[Review]]:
+    def get(self, yelp_direct_url: str, review_limit: int) -> list[Review]:
         """
         Run the scraper and return the structured results.
 
@@ -88,4 +86,4 @@ class YelpReviewsInterface:
         self._prepare_for_call(yelp_direct_url, review_limit)
         self._call_scraper()
         self._structure_results()
-        return self.structured_results
+        return self.structured_reviews
