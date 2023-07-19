@@ -28,12 +28,13 @@ class GraphConnection:
     def check_if_node_exists(
         self, node_label: str, node_id_value: str, node_id_name: str = "id"
     ) -> bool:
-        # TODO: Not working.
-        query = f"g.V().has('{node_label}', '{node_id_name}', '{node_id_value}')"
+        query = (
+            f"g.V().has('{node_label}', '{node_id_name}', '{node_id_value}').Count()"
+        )
         callback = self.gremlin_client.submitAsync(query)  # type: ignore
-        node_exists = callback.result().one() is None  # type: ignore
-
-        return node_exists
+        result: int = callback.result().one()[0]  # type: ignore
+        node_exists: bool = result >= 1  # type: ignore
+        return node_exists  # type: ignore
 
     def add_review(self, review: Review) -> None:
         review_id = review.source.name + review.source_review_id
