@@ -3,44 +3,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from apify_client import ApifyClient
-import os
 
-from dataclasses import dataclass
-from enum import Enum, auto
 from typing import List
 from pydantic import BaseModel
 
-
-class Rating(Enum):
-    ONE = auto()
-    TWO = auto()
-    THREE = auto()
-    FOUR = auto()
-    FIVE = auto()
-
-
-rating_mapping = {
-    1: Rating.ONE,
-    2: Rating.TWO,
-    3: Rating.THREE,
-    4: Rating.FOUR,
-    5: Rating.FIVE,
-}
-
-
-class Source(Enum):
-    YELP = auto()
-    OTHER = auto()
-
-
-@dataclass
-# rating with enum
-class Review:
-    date: str
-    rating: Rating
-    text: str
-    source: Source
-    source_review_id: str
+from graph import Review, ReviewSource, RATING_MAPPING
 
 
 class ApifyYelpReview(BaseModel):
@@ -55,19 +22,20 @@ class ApifyYelpLocation(BaseModel):
     reviews: List[ApifyYelpReview]
 
 
-class YelpReviews:
+class YelpReviewsInterface:
     """
     Scrape Yelp reviews using Apify's Yelp Scraper actor
     """
 
-    def __init__(
-        self,
-        apify_client: ApifyClient,
-        yelp_direct_url: str,
-        review_limit: int = 9999,
-    ) -> None:
+    def __init__(self, apify_client: ApifyClient) -> None:
         # Init Inputs
         self.apify_client = apify_client
+
+        # Init Outputs
+        self.raw_reviews_for_locations: list[ApifyYelpLocation] = []
+        self.structured_results: dict[str, list[Review]] = {}
+
+    def _prepare_for_call(self, yelp_direct_url: str, review_limit: int) -> None:
         self.yelp_direct_urls = [yelp_direct_url]
         self.apify_actor_input = {
             "directUrls": self.yelp_direct_urls,
@@ -82,10 +50,6 @@ class YelpReviews:
             },
             "maxRequestRetries": 10,
         }
-
-        # Init Outputs
-        self.raw_reviews_for_locations: list[ApifyYelpLocation] = []
-        self.structured_results: dict[str, list[Review]] = {}
 
     def _call_scraper(self) -> None:
         actor_client = self.apify_client.actor("yin/yelp-scraper")
@@ -102,9 +66,9 @@ class YelpReviews:
             for raw_review in raw_location.reviews:
                 review = Review(
                     date=raw_review.date,
-                    rating=rating_mapping[raw_review.rating],
+                    rating=RATING_MAPPING[raw_review.rating],
                     text=raw_review.text,
-                    source=Source.YELP,
+                    source=ReviewSource.YELP,
                     source_review_id=raw_review.id,
                 )
 
@@ -112,31 +76,16 @@ class YelpReviews:
 
             self.structured_results[raw_location.directUrl] = reviews
 
-    def run(self) -> dict[str, list[Review]]:
+    def get(self, yelp_direct_url: str, review_limit: int) -> dict[str, list[Review]]:
         """
         Run the scraper and return the structured results.
 
         The structured results are a dictionary with the direct url as the key and a list of structured reviews as the value.
+
+        yelp_direct_url: The direct url to the Yelp business page you want to scrape.
+        review_limit: The maximum number of reviews to scrape.
         """
+        self._prepare_for_call(yelp_direct_url, review_limit)
         self._call_scraper()
         self._structure_results()
         return self.structured_results
-
-
-class GraphInterface:
-    def add_review(self, review: Review) -> None:
-        pass
-
-
-# Initialize the ApifyClient with your API token
-apify_client = ApifyClient(os.environ["APIFY_API_TOKEN"])
-
-# Scrape Yelp
-yelp_reviews = YelpReviews(
-    apify_client,
-    yelp_direct_url="https://www.yelp.com/biz/souvla-san-francisco-3?osq=souvla",
-    review_limit=2,
-)
-structured_reviews = yelp_reviews.run()
-
-print(structured_reviews)
