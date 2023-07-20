@@ -1,0 +1,15 @@
+{
+  "scriptFile": "__init__.py",
+  "bindings": [
+    {
+      "type": "cosmosDBTrigger",
+      "name": "documents",
+      "direction": "in",
+      "leaseCollectionName": "GraphChangeRouterLeases",
+      "connectionStringSetting": "feedbackassistant_DOCUMENTDB",
+      "databaseName": "sample-database",
+      "collectionName": "sample-graph",
+      "createLeaseCollectionIfNotExists": true
+    }
+  ]
+}

@@ -26,6 +26,12 @@ class GraphConnection:
             message_serializer=serializer.GraphSONSerializersV2d0(),
         )
 
+    def get_node_by_id(self, node_id: str) -> dict:  # type: ignore
+        query = f"g.V('{node_id}')"
+        callback = self.gremlin_client.submitAsync(query)  # type: ignore
+        result = callback.result().one()[0]  # type: ignore
+        return result  # type: ignore
+
     def check_if_node_exists(
         self, node_label: str, node_id_value: str, node_id_name: str = "id"
     ) -> bool:
