@@ -7,3 +7,4 @@ gremlinpython
 apify-client
 python-dotenv
 pydantic
+requests

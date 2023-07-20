@@ -8,6 +8,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     req_body = req.get_json()
 
+    logging.info(f"Request body: {req_body}")
+
     id: str = req_body.get("id")
 
     logging.info(f"Handling Review Change for ID: {id}")

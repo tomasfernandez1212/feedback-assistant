@@ -1,7 +1,10 @@
 import logging
 from datetime import datetime
 import os
+import json
 import requests
+
+from azure.functions import DocumentList
 
 FUNCTION_FOR_LABEL = {
     "review": "HandleReviewChange",
@@ -17,12 +20,12 @@ def call_function(function_name: str, body: dict[str, str]):
     return response
 
 
-def main(documents: list[dict[str, str]]):
+def main(documents: DocumentList):
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    for document in documents:
-        id = document["id"]
-        label = document["label"]
+    for document in documents:  # type: ignore
+        id = document["id"]  # type: ignore
+        label = document["label"]  # type: ignore
 
         logging.info(f"Detected change to {id} of type {label} at {current_time}.")
 
@@ -30,5 +33,5 @@ def main(documents: list[dict[str, str]]):
             logging.info(f"Label {label} does not have a handling function.")
             continue
 
-        handling_function_name = FUNCTION_FOR_LABEL[label]
-        call_function(handling_function_name, document)
+        handling_function_name = FUNCTION_FOR_LABEL[label]  # type: ignore
+        call_function(handling_function_name, json.loads(document.to_json()))  # type: ignore
