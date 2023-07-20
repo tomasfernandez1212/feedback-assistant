@@ -7,8 +7,8 @@ from apify_client import ApifyClient
 from typing import List
 from pydantic import BaseModel
 
-from graph.data.misc import RATING_MAPPING
-from graph.data.reviews import Review, ReviewSource
+from src.graph.data.misc import RATING_MAPPING
+from src.graph.data.reviews import Review, ReviewSource
 
 
 class ApifyYelpReview(BaseModel):

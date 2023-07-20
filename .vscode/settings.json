@@ -1,5 +1,5 @@
 {
-    "azureFunctions.deploySubpath": "functions",
+    "azureFunctions.deploySubpath": "azure_functions",
     "azureFunctions.scmDoBuildDuringDeployment": true,
     "azureFunctions.projectLanguage": "Python",
     "azureFunctions.projectRuntime": "~4",
@@ -7,5 +7,6 @@
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
-    "python.formatting.provider": "none"
+    "python.formatting.provider": "none",
+    "azureFunctions.pythonVenv": ".venv"
 }

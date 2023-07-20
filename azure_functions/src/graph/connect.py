@@ -1,4 +1,5 @@
-from graph.data.reviews import Review
+import logging
+from src.graph.data.reviews import Review
 import os, sys, asyncio
 
 from gremlin_python.driver import client, serializer  # type: ignore
@@ -42,7 +43,7 @@ class GraphConnection:
         node_exists = self.check_if_node_exists("review", review_id)
 
         if node_exists:
-            print(f"Review {review_id} already exists in graph")
+            logging.info(f"Review {review_id} already exists in graph")
             return
 
         review_text = review.text.replace("\n", "\\n").replace("'", "\\'")

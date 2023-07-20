@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from graph.data.misc import Rating
+from src.graph.data.misc import Rating
 
 
 class ReviewSource(Enum):
