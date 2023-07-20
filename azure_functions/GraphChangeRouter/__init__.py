@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 import azure.functions as func
 
@@ -7,8 +8,8 @@ FUNCTION_FOR_LABEL = {
 }
 
 
-def main(documents: func.DocumentList) -> str:
-    current_time = func.utcnow().replace(microsecond=0).isoformat()
+def main(documents: list[dict[str, str]]):
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     for document in documents:
         id = document["id"]
