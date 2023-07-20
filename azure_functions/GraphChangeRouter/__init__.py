@@ -1,11 +1,20 @@
 import logging
 from datetime import datetime
-
-import azure.functions as func
+import os
+import requests
 
 FUNCTION_FOR_LABEL = {
-    "review": "handleReviewChange",
+    "review": "HandleReviewChange",
 }
+
+FUNCTION_APP_NAME = "feedback-assistant-function-app"
+
+
+def call_function(function_name: str, body: dict[str, str]):
+    function_key = os.environ[f"{function_name}_KEY"]
+    url = f"https://{FUNCTION_APP_NAME}.azurewebsites.net/api/{function_name}?code={function_key}"
+    response = requests.post(url, json=body)
+    return response
 
 
 def main(documents: list[dict[str, str]]):
@@ -22,3 +31,4 @@ def main(documents: list[dict[str, str]]):
             continue
 
         handling_function_name = FUNCTION_FOR_LABEL[label]
+        call_function(handling_function_name, document)
