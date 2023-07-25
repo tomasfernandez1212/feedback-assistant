@@ -50,8 +50,7 @@ class GraphConnection:
         result = json.dumps(callback.result().one()[0])  # type: ignore
         return result
 
-    def get_node(self, id: str) -> Union[Review, FeedbackItem]:
-        node_str = self.get_node_as_str(id)
+    def str_to_object(self, node_str: str) -> Union[Review, FeedbackItem]:
         label = json.loads(node_str)["label"]
         model_class = self.graph_label_to_class[label]
         node_json = json.loads(node_str)
@@ -59,6 +58,11 @@ class GraphConnection:
         for key, list_of_json in node_unpacked.items():
             node_unpacked[key] = list_of_json[0]["value"]
         node = model_class.model_validate(node_unpacked)
+        return node
+
+    def get_node(self, id: str) -> Union[Review, FeedbackItem]:
+        node_str = self.get_node_as_str(id)
+        node = self.str_to_object(node_str)
         return node
 
     def add_node(self, node: Union[Review, FeedbackItem], skip_existing: bool = True):

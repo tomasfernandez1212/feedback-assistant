@@ -7,7 +7,7 @@ import requests
 from azure.functions import DocumentList
 
 FUNCTION_FOR_LABEL = {
-    "review": "HandleReviewChange",
+    "Review": "HandleReviewChange",
 }
 
 FUNCTION_APP_NAME = "feedback-assistant-function-app"
@@ -15,6 +15,9 @@ FUNCTION_APP_NAME = "feedback-assistant-function-app"
 
 def call_function(function_name: str, body: dict[str, str]):
     function_key = os.environ[f"{function_name}_KEY"]
+    if function_key == "":
+        raise Exception(f"{function_name}_KEY is not set")
+    logging.info(f"Calling {function_name} with body {body}")
     url = f"https://{FUNCTION_APP_NAME}.azurewebsites.net/api/{function_name}?code={function_key}"
     response = requests.post(url, json=body)
     return response
