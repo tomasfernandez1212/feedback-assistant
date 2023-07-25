@@ -1,8 +1,6 @@
-from dataclasses import dataclass
 from pydantic import BaseModel, validator
 
 
-@dataclass
 class FeedbackItem(BaseModel):
     satisfaction_score: float
     timestamp: int
