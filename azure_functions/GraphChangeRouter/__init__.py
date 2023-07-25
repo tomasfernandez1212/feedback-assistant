@@ -20,12 +20,12 @@ def call_function(function_name: str, body: dict[str, str]):
     return response
 
 
-def main(documents: DocumentList):
+def main(nodes: DocumentList):
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    for document in documents:  # type: ignore
-        id = document["id"]  # type: ignore
-        label = document["label"]  # type: ignore
+    for node in nodes:  # type: ignore
+        id = node["id"]  # type: ignore
+        label = node["label"]  # type: ignore
 
         logging.info(f"Detected change to {id} of type {label} at {current_time}.")
 
@@ -34,4 +34,4 @@ def main(documents: DocumentList):
             continue
 
         handling_function_name = FUNCTION_FOR_LABEL[label]  # type: ignore
-        call_function(handling_function_name, json.loads(document.to_json()))  # type: ignore
+        call_function(handling_function_name, json.loads(node.to_json()))  # type: ignore
