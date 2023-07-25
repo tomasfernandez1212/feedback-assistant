@@ -1,7 +1,6 @@
 import logging
 
 import azure.functions as func
-from src.graph.connect import GraphConnection
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
