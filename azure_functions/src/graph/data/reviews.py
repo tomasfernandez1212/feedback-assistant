@@ -1,6 +1,6 @@
 from enum import Enum, auto
-from typing import Any
 from pydantic import BaseModel
+from typing import Any
 
 from src.graph.data.misc import Rating
 
@@ -16,7 +16,8 @@ class Review(BaseModel):
     text: str
     source: ReviewSource
     source_review_id: str
-    review_id: str = ""
+    id: str = ""
 
     def model_post_init(self, __context: Any) -> None:
-        self.review_id = self.source.name + self.source_review_id
+        self.id: str = f"{self.source.name}_{self.source_review_id}"
+        return super().model_post_init(__context)
