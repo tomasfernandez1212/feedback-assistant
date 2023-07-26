@@ -36,6 +36,9 @@ class GraphConnection:
             "FeedbackItem": FeedbackItem,
         }
 
+    def close(self):
+        self.gremlin_client.close()
+
     def reset_graph(self, confirm_graph_name: str):
         if confirm_graph_name != os.environ["AZURE_COSMOS_GRAPH_NAME"]:
             raise Exception("Graph name does not match")
