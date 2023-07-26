@@ -48,7 +48,7 @@ class GraphConnection:
 
     def check_if_node_exists(self, id: str) -> bool:
         query = f"g.V('{id}')"
-        callback = self.gremlin_client.submitAsync(query)  # type: ignore
+        callback = self.gremlin_client.submit_async(query)  # type: ignore
         one: list = callback.result().one()  # type: ignore
         result = len(one)  # type: ignore
         node_exists: bool = result >= 1  # type: ignore
@@ -56,7 +56,7 @@ class GraphConnection:
 
     def get_node_as_str(self, node_id: str) -> str:
         query = f"g.V('{node_id}')"
-        callback = self.gremlin_client.submitAsync(query)  # type: ignore
+        callback = self.gremlin_client.submit_async(query)  # type: ignore
         result = json.dumps(callback.result().one()[0])  # type: ignore
         return result
 

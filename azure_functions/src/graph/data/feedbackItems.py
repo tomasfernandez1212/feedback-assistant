@@ -1,5 +1,5 @@
 from typing import Any
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 from uuid import uuid4
 
 
@@ -12,7 +12,7 @@ class FeedbackItem(BaseModel):
         self.id: str = str(uuid4())
         return super().model_post_init(__context)
 
-    @validator("satisfaction_score")
+    @field_validator("satisfaction_score")
     def satisfaction_score_must_be_between_0_and_100(cls, satisfaction_score: int):
         if satisfaction_score < 0 or satisfaction_score > 100:
             raise ValueError("satisfaction_score must be between 0 and 100")
