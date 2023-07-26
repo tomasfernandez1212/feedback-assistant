@@ -8,8 +8,6 @@ from src.graph.data.feedbackItems import FeedbackItem
 
 from src.openai import OpenAIInterface
 
-graph = GraphConnection()
-
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("Unpacking Request Body")
@@ -17,6 +15,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     id: str = req_body.get("id")
 
     logging.info(f"Getting Review with ID: {id}")
+    graph = GraphConnection()
     review = graph.get_node(id)
     if type(review) != Review:
         return func.HttpResponse(
