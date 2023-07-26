@@ -3,23 +3,37 @@ import logging
 import azure.functions as func
 
 from src.graph.connect import GraphConnection
+from src.graph.data.reviews import Review
+from src.graph.data.feedbackItems import FeedbackItem
+
+from src.openai import OpenAIInterface
 
 graph = GraphConnection()
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("Request received.")
-
+    logging.info("Unpacking Request Body")
     req_body = req.get_json()
-
-    logging.info(f"Request body: {req_body}")
-
     id: str = req_body.get("id")
 
-    logging.info(f"Handling Review Change for ID: {id}")
+    logging.info(f"Getting Review with ID: {id}")
+    review = graph.get_node(id)
+    if type(review) != Review:
+        return func.HttpResponse(
+            f"Node with ID: {id} is not a review.", status_code=404
+        )
 
-    node = graph.get_node(id)
+    logging.info("Getting Satisfaction Score")
+    openai_interface = OpenAIInterface()
+    score = openai_interface.get_satisfaction_score(review.text)
 
-    logging.info(f"Node: {node}")
+    logging.info("Creating Feedback Item")
+    feedback_item = FeedbackItem(
+        satisfaction_score=score,
+        timestamp=123,  # TODO: Get timestamp from review
+    )
+
+    logging.info("Adding Feedback Item to Graph")
+    graph.add_node(feedback_item)
 
     return func.HttpResponse(f"Handling Review Change for ID: {id}")
