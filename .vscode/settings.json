@@ -11,5 +11,10 @@
     "azureFunctions.pythonVenv": ".venv",
     "python.analysis.extraPaths": [
         "./azure_functions"
-    ]
+    ],
+    "python.testing.pytestArgs": [
+        "azure_functions"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
 }
