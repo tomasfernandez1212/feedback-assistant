@@ -91,3 +91,13 @@ class GraphConnection:
     def add_nodes(self, nodes: Union[list[Review], list[FeedbackItem]]):
         for node in nodes:
             self.add_node(node)
+
+    def add_edge(
+        self,
+        from_node: Union[Review, FeedbackItem],
+        to_node: Union[Review, FeedbackItem],
+        edge_label: str,
+    ):
+        query = f"g.V('{from_node.id}').addE('{edge_label}').to(g.V('{to_node.id}'))"
+        callback = self.gremlin_client.submit(query)
+        callback.one()

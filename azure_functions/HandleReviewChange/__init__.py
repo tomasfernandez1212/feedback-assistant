@@ -35,5 +35,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     logging.info("Adding Feedback Item to Graph")
     graph.add_node(feedback_item)
+    graph.add_edge(feedback_item, review, "constituted_by")
 
     return func.HttpResponse(f"Handling Review Change for ID: {id}")
