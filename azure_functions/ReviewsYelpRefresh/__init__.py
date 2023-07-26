@@ -30,5 +30,6 @@ def main(mytimer: func.TimerRequest) -> None:
     # Add Reviews to Graph
     graph = GraphConnection()
     graph.add_nodes(structured_reviews)
+    graph.close()
 
     logging.info("Done")

@@ -32,5 +32,5 @@ class TestHandleReviewChange(unittest.TestCase):
         resp = main(req)
         self.assertEqual(
             resp.get_body(),
-            b"Handling Review Change for ID: YELP_9hHyzoRRlXr2tQFDXGSbmg",
+            b"Hanlded Review Change for ID: YELP_9hHyzoRRlXr2tQFDXGSbmg",
         )

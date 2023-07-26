@@ -38,4 +38,4 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     graph.close()
 
-    return func.HttpResponse(f"Handling Review Change for ID: {id}")
+    return func.HttpResponse(f"Hanlded Review Change for ID: {id}")
