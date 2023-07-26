@@ -36,6 +36,13 @@ class GraphConnection:
             "FeedbackItem": FeedbackItem,
         }
 
+    def reset_graph(self, confirm_graph_name: str):
+        if confirm_graph_name != os.environ["AZURE_COSMOS_GRAPH_NAME"]:
+            raise Exception("Graph name does not match")
+        query = "g.V().drop()"
+        callback = self.gremlin_client.submit(query)  # type: ignore
+        callback.one()  # type: ignore
+
     def check_if_node_exists(self, id: str) -> bool:
         query = f"g.V('{id}')"
         callback = self.gremlin_client.submitAsync(query)  # type: ignore
