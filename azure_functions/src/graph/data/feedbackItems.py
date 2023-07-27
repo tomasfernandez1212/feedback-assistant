@@ -9,7 +9,8 @@ class FeedbackItem(BaseModel):
     id: str = ""
 
     def model_post_init(self, __context: Any) -> None:
-        self.id: str = str(uuid4())
+        if self.id == "":
+            self.id: str = str(uuid4())
         return super().model_post_init(__context)
 
     @field_validator("satisfaction_score")

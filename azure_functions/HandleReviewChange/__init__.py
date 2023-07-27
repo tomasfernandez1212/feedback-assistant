@@ -36,6 +36,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     graph.add_node(feedback_item)
     graph.add_edge(feedback_item, review, "constituted_by")
 
+    logging.info("Closing Graph Connection")
     graph.close()
 
     return func.HttpResponse(f"Hanlded Review Change for ID: {id}")
