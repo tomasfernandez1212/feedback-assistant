@@ -2,7 +2,6 @@ import unittest
 import azure.functions as func
 from typing import Callable, Any
 from unittest import mock
-import pytest
 
 from HandleReviewChange import main
 from src.graph.connect import GraphConnection
