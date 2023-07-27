@@ -39,4 +39,4 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("Closing Graph Connection")
     graph.close()
 
-    return func.HttpResponse(f"Hanlded Review Change for ID: {id}")
+    return func.HttpResponse("Hanlded Review Change", status_code=200)

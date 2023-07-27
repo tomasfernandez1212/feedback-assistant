@@ -17,10 +17,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     feedback_item = graph.get_node(id)
 
     logging.info("Getting Review")
-    review = graph.traverse(feedback_item, "constituted_by")[0]
+    result = graph.traverse(feedback_item, "constituted_by")
+    review = result[0]
 
     logging.info("Getting Topic Tags")
     openai_interface = OpenAIInterface()
     list_of_tags = openai_interface.get_list_of_topics(review.text)
 
-    return func.HttpResponse(f"Hanlded FeedbackItem Change for ID: {id}")
+    return func.HttpResponse(f"Hanlded FeedbackItem Change.", status_code=200)

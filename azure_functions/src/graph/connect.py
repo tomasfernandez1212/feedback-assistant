@@ -67,6 +67,7 @@ class GraphConnection:
         node_unpacked = node_json["properties"]
         for key, list_of_json in node_unpacked.items():
             node_unpacked[key] = list_of_json[0]["value"]
+        node_unpacked["id"] = node_json["id"]
         node = model_class.model_validate(node_unpacked)
         return node
 
@@ -109,13 +110,17 @@ class GraphConnection:
         edge_label: str,
     ):
         query = f"g.V('{from_node.id}').addE('{edge_label}').to(g.V('{to_node.id}'))"
-        callback = self.gremlin_client.submit(query)
-        callback.one()
+        callback = self.gremlin_client.submit(query)  # type: ignore
+        callback.one()  # type: ignore
 
     def traverse(
         self, node: Union[Review, FeedbackItem], edge_label: str
     ) -> list[Review]:
         query = f"g.V('{node.id}').out('{edge_label}')"
-        callback = self.gremlin_client.submit(query)
-        results = callback.all()
-        return results
+        callback = self.gremlin_client.submit(query)  # type: ignore
+        future = callback.all()  # type: ignore
+        list_of_node_dicts = future.result()  # type: ignore
+        list_of_nodes = []
+        for node_dict in list_of_node_dicts:  # type: ignore
+            list_of_nodes.append(self.str_to_object(json.dumps(node_dict)))  # type: ignore
+        return list_of_nodes  # type: ignore
