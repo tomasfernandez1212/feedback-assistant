@@ -111,3 +111,9 @@ class GraphConnection:
         query = f"g.V('{from_node.id}').addE('{edge_label}').to(g.V('{to_node.id}'))"
         callback = self.gremlin_client.submit(query)
         callback.one()
+
+    def traverse(self, node: Union[Review, FeedbackItem], edge_label: str):
+        query = f"g.V('{node.id}').out('{edge_label}')"
+        callback = self.gremlin_client.submit(query)
+        results = callback.all()
+        return results
