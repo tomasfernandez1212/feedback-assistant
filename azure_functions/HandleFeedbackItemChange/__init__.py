@@ -20,6 +20,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     logging.info("Getting Review")
     result = graph.traverse(feedback_item, "constituted_by")
+    if len(result) != 1:
+        raise Exception(
+            f"FeedbackItem is not constituted by exactly one element. Count: {len(result)}"
+        )
     review = result[0]
 
     logging.info("Getting Tags")
