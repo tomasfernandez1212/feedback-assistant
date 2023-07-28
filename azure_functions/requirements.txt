@@ -8,5 +8,5 @@ apify-client
 python-dotenv
 pydantic
 requests
-openai
+openai[datalib]
 pytest

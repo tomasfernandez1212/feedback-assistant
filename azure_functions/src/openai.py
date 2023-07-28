@@ -84,3 +84,8 @@ class OpenAIInterface:
 
         list_of_topics: list[str] = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])["topics"]  # type: ignore
         return list_of_topics  # type: ignore
+
+    def get_embedding(self, text: str) -> list[float]:
+        response = openai.Embedding.create(input=text, model="text-embedding-ada-002")  # type: ignore
+        embeddings = response["data"][0]["embedding"]  # type: ignore
+        return embeddings  # type: ignore
