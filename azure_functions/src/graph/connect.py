@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import List
 from enum import Enum
 from src.graph.data import NodeType, ListNodesType, LABEL_TO_CLASS
@@ -110,11 +111,33 @@ class GraphConnection:
         to_nodes: ListNodesType,
         edge_label: str,
     ):
+        """
+        Adds edges between nodes. Assumes that the nodes already exist in the graph.
+
+        Due to distributed nature of CosmosDB, there is eventual consistency but it is possible that the nodes do not exist in the graph yet.
+
+        For this reason we retry the query if it returns an empty list.
+        """
+
+        MAX_RETRIES = 3
+        RETRY_DELAY = 0.2  # time to wait between retries, in seconds
+
         for from_node in from_nodes:
             for to_node in to_nodes:
-                query = f"g.V('{from_node.id}').addE('{edge_label}').to(g.V('{to_node.id}'))"
-                callback = self.gremlin_client.submit(query)  # type: ignore
-                callback.one()  # type: ignore
+                for attempt in range(MAX_RETRIES):
+                    try:
+                        query = f"g.V('{from_node.id}').addE('{edge_label}').to(g.V('{to_node.id}'))"
+                        logging.info(f"Attempt: {attempt + 1} at adding edge.")
+                        callback = self.gremlin_client.submit(query)  # type: ignore
+                        edge = callback.one()  # type: ignore
+                        if len(edge) > 0:  # type: ignore
+                            logging.info("Successfully added edge.")
+                            break  # successfully added this edge
+                    except:
+                        if attempt < MAX_RETRIES - 1:  # i.e. not the last attempt
+                            time.sleep(RETRY_DELAY)  # wait before next attempt
+                        else:
+                            raise  # re-raise the last exception
 
     def traverse(self, node: NodeType, edge_label: str) -> List[Review]:
         query = f"g.V('{node.id}').out('{edge_label}')"
