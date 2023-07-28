@@ -1,5 +1,4 @@
 import openai
-import logging
 import json
 from typing import List
 
@@ -35,8 +34,6 @@ class OpenAIInterface:
             ],
             function_call={"name": "report_score"},
         )
-
-        logging.info("Response: %s", response)  # type: ignore
 
         score: int = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])["score"]  # type: ignore
         return score  # type: ignore
@@ -80,8 +77,6 @@ class OpenAIInterface:
             ],
             function_call={"name": "report_topics"},
         )
-
-        logging.info("Response: %s", response)  # type: ignore
 
         list_of_topics: List[str] = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])["topics"]  # type: ignore
         return list_of_topics  # type: ignore

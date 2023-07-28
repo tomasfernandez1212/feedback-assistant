@@ -17,7 +17,7 @@ def call_function(function_name: str, body: dict[str, str]):
         raise Exception(f"{function_name}_KEY is not set")
 
     # Create URL
-    logging.info(f"Calling {function_name} with body {body}")
+    logging.info(f"Calling {function_name}.")
     url = f"https://{FUNCTION_APP_NAME}.azurewebsites.net/api/{function_name}?code={function_key}"
 
     # This starts the request, but doesn't wait for the response
