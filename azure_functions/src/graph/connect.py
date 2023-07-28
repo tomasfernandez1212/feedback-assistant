@@ -1,4 +1,5 @@
 import logging
+from typing import List
 from enum import Enum
 from src.graph.data import NodeType, ListNodesType, LABEL_TO_CLASS
 
@@ -103,17 +104,19 @@ class GraphConnection:
         for node in nodes:
             self.add_node(node)
 
-    def add_edge(
+    def add_edges(
         self,
-        from_node: NodeType,
-        to_node: NodeType,
+        from_nodes: ListNodesType,
+        to_nodes: ListNodesType,
         edge_label: str,
     ):
-        query = f"g.V('{from_node.id}').addE('{edge_label}').to(g.V('{to_node.id}'))"
-        callback = self.gremlin_client.submit(query)  # type: ignore
-        callback.one()  # type: ignore
+        for from_node in from_nodes:
+            for to_node in to_nodes:
+                query = f"g.V('{from_node.id}').addE('{edge_label}').to(g.V('{to_node.id}'))"
+                callback = self.gremlin_client.submit(query)  # type: ignore
+                callback.one()  # type: ignore
 
-    def traverse(self, node: NodeType, edge_label: str) -> list[Review]:
+    def traverse(self, node: NodeType, edge_label: str) -> List[Review]:
         query = f"g.V('{node.id}').out('{edge_label}')"
         callback = self.gremlin_client.submit(query)  # type: ignore
         future = callback.all()  # type: ignore

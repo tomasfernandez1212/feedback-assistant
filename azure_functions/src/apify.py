@@ -33,8 +33,8 @@ class YelpReviewsInterface:
         self.apify_client = apify_client
 
         # Init Outputs
-        self.raw_reviews_for_locations: list[ApifyYelpLocation] = []
-        self.structured_reviews: list[Review] = []
+        self.raw_reviews_for_locations: List[ApifyYelpLocation] = []
+        self.structured_reviews: List[Review] = []
 
     def _prepare_for_call(self, yelp_direct_url: str, review_limit: int) -> None:
         self.yelp_direct_urls = [yelp_direct_url]
@@ -74,7 +74,7 @@ class YelpReviewsInterface:
 
             self.structured_reviews.append(review)
 
-    def get(self, yelp_direct_url: str, review_limit: int) -> list[Review]:
+    def get(self, yelp_direct_url: str, review_limit: int) -> List[Review]:
         """
         Run the scraper and return the structured results.
 

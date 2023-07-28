@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 import azure.functions as func
 
@@ -26,12 +27,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     list_of_tags = openai_interface.get_list_of_topics(review.text)
 
     logging.info("Structuring Tags")
-    structured_tags: list[Tag] = []
+    structured_tags: List[Tag] = []
     for tag in list_of_tags:
         embedding = openai_interface.get_embedding(tag)
         structured_tags.append(Tag(name=tag, embedding=str(embedding)))
 
     logging.info("Adding Tags to Graph")
     graph.add_nodes(structured_tags)
+    graph.add_edges([feedback_item], structured_tags, "has")
 
     return func.HttpResponse(f"Hanlded FeedbackItem Change.", status_code=200)

@@ -1,6 +1,7 @@
 import openai
 import logging
 import json
+from typing import List
 
 
 class OpenAIInterface:
@@ -82,10 +83,10 @@ class OpenAIInterface:
 
         logging.info("Response: %s", response)  # type: ignore
 
-        list_of_topics: list[str] = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])["topics"]  # type: ignore
+        list_of_topics: List[str] = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])["topics"]  # type: ignore
         return list_of_topics  # type: ignore
 
-    def get_embedding(self, text: str) -> list[float]:
+    def get_embedding(self, text: str) -> List[float]:
         response = openai.Embedding.create(input=text, model="text-embedding-ada-002")  # type: ignore
         embeddings = response["data"][0]["embedding"]  # type: ignore
         return embeddings  # type: ignore

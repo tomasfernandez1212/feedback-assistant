@@ -28,7 +28,7 @@ class TestFeedbackItemChange(unittest.TestCase):
             satisfaction_score=5, timestamp=123, id="feedback_item_id"
         )
         graph.add_node(feedback_item)
-        graph.add_edge(feedback_item, review, "constituted_by")
+        graph.add_edges([feedback_item], [review], "constituted_by")
 
         # Close Graph Connection
         graph.close()
