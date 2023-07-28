@@ -6,10 +6,6 @@ import requests
 
 from azure.functions import DocumentList
 
-FUNCTION_FOR_LABEL = {
-    "Review": "HandleReviewChange",
-}
-
 FUNCTION_APP_NAME = "feedback-assistant-function-app"
 
 
@@ -32,9 +28,5 @@ def main(nodes: DocumentList):
 
         logging.info(f"Detected change to {id} of type {label} at {current_time}.")
 
-        if label not in FUNCTION_FOR_LABEL:
-            logging.info(f"Label {label} does not have a handling function.")
-            continue
-
-        handling_function_name = FUNCTION_FOR_LABEL[label]  # type: ignore
+        handling_function_name = f"Handle{label}Change"  # type: ignore
         call_function(handling_function_name, json.loads(node.to_json()))  # type: ignore
