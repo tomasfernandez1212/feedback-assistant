@@ -15,20 +15,24 @@ if sys.platform == "win32":
 
 
 class GraphConnection:
-    def __init__(self) -> None:
-        AZURE_COSMOS_HOST_NAME = os.environ.get("AZURE_COSMOS_HOST_NAME")
-        AZURE_COSMOS_DB_NAME = os.environ.get("AZURE_COSMOS_DB_NAME")
-        AZURE_COSMOS_GRAPH_NAME = os.environ.get("AZURE_COSMOS_GRAPH_NAME")
-        AZURE_COSMOS_DB_KEY = os.environ.get("AZURE_COSMOS_DB_KEY")
+    def __init__(self, strong_consistency: bool = False) -> None:
+        preprend = "EVENTUAL_GRAPH"
+        if strong_consistency:
+            preprend = "STRONG_GRAPH"
 
-        if AZURE_COSMOS_DB_KEY is None:
-            raise Exception("AZURE_COSMOS_DB_KEY is not set")
+        self.host_name = os.environ.get(f"{preprend}_HOST_NAME")
+        self.db_name = os.environ.get(f"{preprend}_DB_NAME")
+        self.graph_name = os.environ.get(f"{preprend}_GRAPH_NAME")
+        DB_KEY = os.environ.get(f"{preprend}_DB_KEY")
+
+        if DB_KEY is None:
+            raise Exception(f"{preprend}_DB_KEY is not set")
 
         self.gremlin_client = client.Client(
-            f"wss://{AZURE_COSMOS_HOST_NAME}.gremlin.cosmos.azure.com:443/",
+            f"wss://{self.host_name}.gremlin.cosmos.azure.com:443/",
             "g",
-            username=f"/dbs/{AZURE_COSMOS_DB_NAME}/colls/{AZURE_COSMOS_GRAPH_NAME}",
-            password=AZURE_COSMOS_DB_KEY,
+            username=f"/dbs/{self.db_name}/colls/{self.graph_name}",
+            password=DB_KEY,
             message_serializer=serializer.GraphSONSerializersV2d0(),
         )
 
@@ -38,7 +42,7 @@ class GraphConnection:
         self.gremlin_client.close()
 
     def reset_graph(self, confirm_graph_name: str):
-        if confirm_graph_name != os.environ["AZURE_COSMOS_GRAPH_NAME"]:
+        if confirm_graph_name != self.graph_name:
             raise Exception("Graph name does not match")
         query = "g.V().drop()"
         callback = self.gremlin_client.submit(query)  # type: ignore

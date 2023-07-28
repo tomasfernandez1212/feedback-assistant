@@ -7,8 +7,8 @@
       "direction": "in",
       "leaseCollectionName": "GraphChangeRouterLeases",
       "connectionStringSetting": "feedbackassistant_DOCUMENTDB",
-      "databaseName": "sample-database",
-      "collectionName": "sample-graph",
+      "databaseName": "feedback-assistant",
+      "collectionName": "feedback-assistant",
       "createLeaseCollectionIfNotExists": true
     }
   ]
