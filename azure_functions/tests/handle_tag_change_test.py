@@ -33,7 +33,7 @@ class TestHandleTagChange(unittest.TestCase):
             embedding=f"{[random.random() for _ in range(1536)]}",
             id="TAG_fh5894",
         )
-        graph.add_nodes([tag_1, tag_2])
+        graph.add_tags_for_feedback_item([tag_1, tag_2], feedback_item)
         graph.close()
 
     def teardown_method(self, method: Callable[[], Any]):

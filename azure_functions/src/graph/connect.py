@@ -6,6 +6,7 @@ from src.graph.data import NodeType, ListNodesType, LABEL_TO_CLASS
 
 from src.graph.data.reviews import Review
 from src.graph.data.feedbackItems import FeedbackItem
+from src.graph.data.tags import Tag
 import os, sys, asyncio, json
 
 from gremlin_python.driver import client, serializer  # type: ignore
@@ -173,6 +174,14 @@ class GraphConnection:
 
         if constituted_by:
             self.add_edges([feedback_item], [constituted_by], "constituted_by")
+
+    def add_tags_for_feedback_item(self, tags: List[Tag], feedback_item: FeedbackItem):
+        """
+        Adds tags as nodes, but also adds edges between feedback item and tags.
+        """
+
+        self.add_nodes(tags)
+        self.add_edges([feedback_item], tags, "has")
 
     def traverse(self, node: NodeType, edge_label: str) -> List[Review]:
         query = f"g.V('{node.id}').out('{edge_label}')"

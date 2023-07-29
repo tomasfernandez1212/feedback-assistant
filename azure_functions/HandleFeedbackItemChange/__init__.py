@@ -37,7 +37,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         structured_tags.append(Tag(name=tag, embedding=str(embedding)))
 
     logging.info("Adding Tags to Graph")
-    graph.add_nodes(structured_tags)
-    graph.add_edges([feedback_item], structured_tags, "has")
+    graph.add_tags_for_feedback_item(structured_tags, feedback_item)
 
     return func.HttpResponse(f"Hanlded FeedbackItem Change.", status_code=200)
