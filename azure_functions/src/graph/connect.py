@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import List, TypeVar, Type, Optional, Dict, Any
+from typing import List, TypeVar, Type, Dict, Any
 from enum import Enum
 from src.graph.data import NodeType, ListNodesType, LABEL_TO_CLASS
 
@@ -158,9 +158,7 @@ class GraphConnection:
                         else:
                             raise  # re-raise the last exception
 
-    def add_feedback_item(
-        self, feedback_item: FeedbackItem, constituted_by: Optional[Review] = None
-    ):
+    def add_feedback_item(self, feedback_item: FeedbackItem, constituted_by: Review):
         """
         Adds feedback item as a node, but also adds edge to node it is constituted by.
         For now, constituted by can only be a review, but in the future it could be a messaging thread.
@@ -169,9 +167,7 @@ class GraphConnection:
         """
 
         self.add_node(feedback_item)
-
-        if constituted_by:
-            self.add_edges([feedback_item], [constituted_by], "constituted_by")
+        self.add_edges([feedback_item], [constituted_by], "constituted_by")
 
     def add_tags_for_feedback_item(self, tags: List[Tag], feedback_item: FeedbackItem):
         """
