@@ -5,6 +5,7 @@ import azure.functions as func
 from src.graph.connect import GraphConnection
 from src.graph.data.tags import Tag
 from src.clustering import cluster_embeddings
+from src.openai import OpenAIInterface
 
 
 def main(mytimer: func.TimerRequest) -> None:
@@ -27,4 +28,16 @@ def main(mytimer: func.TimerRequest) -> None:
     logging.info("Clustering")
     cluster_ids = cluster_embeddings(embeddings)
 
-    print(cluster_ids)
+    logging.info("Organize Tags by Cluster")
+    cluster_to_tags: dict[int, List[Tag]] = {}
+    for tag, cluster_id in zip(tags, cluster_ids):
+        if cluster_id not in cluster_to_tags:
+            cluster_to_tags[cluster_id] = []
+        cluster_to_tags[cluster_id].append(tag)
+
+    logging.info("Get Topic Name Per Cluster from Tags")
+    openai_interface = OpenAIInterface()
+    for cluster_id, tags in cluster_to_tags.items():
+        topic = openai_interface.get_topic_from_tags([tag.name for tag in tags])
+
+    print(topic)

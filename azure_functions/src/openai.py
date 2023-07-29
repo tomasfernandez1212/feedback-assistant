@@ -38,7 +38,7 @@ class OpenAIInterface:
         score: int = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])["score"]  # type: ignore
         return score  # type: ignore
 
-    def get_list_of_topics(self, text: str) -> list[str]:
+    def get_list_of_tags(self, text: str) -> list[str]:
         response = openai.ChatCompletion.create(  # type: ignore
             model="gpt-3.5-turbo-0613",
             messages=[
@@ -85,3 +85,45 @@ class OpenAIInterface:
         response = openai.Embedding.create(input=text, model="text-embedding-ada-002")  # type: ignore
         embeddings = response["data"][0]["embedding"]  # type: ignore
         return embeddings  # type: ignore
+
+    def get_topic_from_tags(self, tags: List[str]) -> str:
+        response = openai.ChatCompletion.create(  # type: ignore
+            model="gpt-3.5-turbo-0613",
+            messages=[
+                {
+                    "role": "system",
+                    "content": """
+                    You are an expert in customer service. Your task is to identify the a common topic among a list of tags from customer's reviews, feedback, and in conversations with us. 
+                 
+                    For example, given these tags ["Good Food", "Black Bean Vegan 'Lamb'", "Chicken Salad", "Delicious Mandarin Oranges", "Delicious Greek Fries"]
+                 
+                    You would identify a single topic that encapsulates the theme of these tags: "Delicious Food"
+                 
+                    The goal is to summarize these tags.""",
+                },
+                {
+                    "role": "user",
+                    "content": f"What is the overarching topic from these tags: {tags}",
+                },
+            ],
+            functions=[
+                {
+                    "name": "report_topic",
+                    "description": "Used to report a topic to the system.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "topic": {
+                                "type": "string",
+                                "description": "A topic.",
+                            },
+                        },
+                    },
+                    "required": ["topic"],
+                }
+            ],
+            function_call={"name": "report_topic"},
+        )
+
+        topic: str = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])["topic"]  # type: ignore
+        return topic  # type: ignore

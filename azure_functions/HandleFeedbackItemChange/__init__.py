@@ -28,7 +28,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     logging.info("Getting Tags")
     openai_interface = OpenAIInterface()
-    list_of_tags = openai_interface.get_list_of_topics(review.text)
+    list_of_tags = openai_interface.get_list_of_tags(review.text)
 
     logging.info("Structuring Tags")
     structured_tags: List[Tag] = []
