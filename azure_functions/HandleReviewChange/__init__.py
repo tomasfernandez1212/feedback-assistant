@@ -33,8 +33,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     )
 
     logging.info("Adding Feedback Item to Graph")
-    graph.add_node(feedback_item)
-    graph.add_edges([feedback_item], [review], "constituted_by")
+    graph.add_feedback_item(feedback_item, constituted_by=review)
 
     logging.info("Closing Graph Connection")
     graph.close()

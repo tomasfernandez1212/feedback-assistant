@@ -1,10 +1,11 @@
 import logging
 import time
-from typing import List, TypeVar, Type
+from typing import List, TypeVar, Type, Optional
 from enum import Enum
 from src.graph.data import NodeType, ListNodesType, LABEL_TO_CLASS
 
 from src.graph.data.reviews import Review
+from src.graph.data.feedbackItems import FeedbackItem
 import os, sys, asyncio, json
 
 from gremlin_python.driver import client, serializer  # type: ignore
@@ -157,6 +158,21 @@ class GraphConnection:
                             time.sleep(RETRY_DELAY)  # wait before next attempt
                         else:
                             raise  # re-raise the last exception
+
+    def add_feedback_item(
+        self, feedback_item: FeedbackItem, constituted_by: Optional[Review] = None
+    ):
+        """
+        Adds feedback item as a node, but also adds edge to node it is constituted by.
+        For now, constituted by can only be a review, but in the future it could be a messaging thread.
+
+        Constituted by should generally be provided, but might be optional for particular testing scenarios.
+        """
+
+        self.add_node(feedback_item)
+
+        if constituted_by:
+            self.add_edges([feedback_item], [constituted_by], "constituted_by")
 
     def traverse(self, node: NodeType, edge_label: str) -> List[Review]:
         query = f"g.V('{node.id}').out('{edge_label}')"

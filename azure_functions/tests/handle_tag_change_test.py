@@ -7,23 +7,31 @@ from HandleTagChange import main
 from src.graph.connect import GraphConnection
 from src.graph.data.tags import Tag
 from src.graph.data.feedbackItems import FeedbackItem
+from src.graph.data.reviews import Review, Rating, ReviewSource
 import random
 
 
 class TestHandleTagChange(unittest.TestCase):
     def setup_method(self, method: Callable[[], Any]):
         graph = GraphConnection()
-        feedback_item = FeedbackItem(satisfaction_score=60, timestamp=345)
-        graph.add_node(feedback_item)
+        review = Review(
+            text="This place had a great atmosphere and the pastries were delicious!",
+            rating=Rating.FOUR,
+            date="2020-01-01T00:00:00Z",
+            source=ReviewSource.YELP,
+            source_review_id="REVIEW_485u0",
+        )
+        feedback_item = FeedbackItem(satisfaction_score=85, timestamp=345)
+        graph.add_feedback_item(feedback_item, review)
         tag_1 = Tag(
             name="Great Atmosphere",
             embedding=f"{[random.random() for _ in range(1536)]}",
-            id="TAG_1",
+            id="TAG_4048u",
         )
         tag_2 = Tag(
             name="Pastries",
             embedding=f"{[random.random() for _ in range(1536)]}",
-            id="TAG_2",
+            id="TAG_fh5894",
         )
         graph.add_nodes([tag_1, tag_2])
         graph.close()
