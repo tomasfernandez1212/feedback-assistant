@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import List
+from typing import List, TypeVar, Type
 from enum import Enum
 from src.graph.data import NodeType, ListNodesType, LABEL_TO_CLASS
 
@@ -12,6 +12,8 @@ from gremlin_python.driver.protocol import GremlinServerError  # type: ignore
 
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+NodeTypeVar = TypeVar("NodeTypeVar", bound=NodeType)
 
 
 class GraphConnection:
@@ -77,6 +79,17 @@ class GraphConnection:
         node_str = self.get_node_as_str(id)
         node = self.str_to_object(node_str)
         return node
+
+    def get_all_nodes_by_type(self, type: Type[NodeTypeVar]) -> List[NodeTypeVar]:
+        query = f"g.V().hasLabel('{type.__name__}')"
+        callback = self.gremlin_client.submit_async(query)  # type: ignore
+        result = callback.result().all().result()  # type: ignore
+        nodes = []
+        for node_dict in result:  # type: ignore
+            node_str = json.dumps(node_dict)
+            node = self.str_to_object(node_str)
+            nodes.append(node)  # type: ignore
+        return nodes  # type: ignore
 
     def add_node(self, node: NodeType, skip_existing: bool = True):
         if skip_existing:

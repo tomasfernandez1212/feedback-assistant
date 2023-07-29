@@ -10,3 +10,4 @@ pydantic
 requests
 openai[datalib]
 pytest
+hdbscan
