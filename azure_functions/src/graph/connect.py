@@ -92,12 +92,14 @@ class GraphConnection:
         return nodes  # type: ignore
 
     def add_node(self, node: NodeType, skip_existing: bool = True):
+        label = type(node).__name__
+
+        logging.info(f"Adding {node.id} of type {label}.")
+
         if skip_existing:
             if self.check_if_node_exists(node.id):
                 logging.info(f"Skipping adding {node.id} because it already exists")
                 return
-
-        label = type(node).__name__
 
         query = f"g.addV('{label}')"
 
@@ -116,7 +118,7 @@ class GraphConnection:
         callback = self.gremlin_client.submit(query)  # type: ignore
         result_set = callback.all()  # type: ignore
 
-        logging.info("Done")
+        logging.info(f"Added {node.id} of type {label}.")
 
     def add_nodes(self, nodes: ListNodesType):
         for node in nodes:

@@ -4,6 +4,7 @@ from typing import List
 import azure.functions as func
 from src.graph.connect import GraphConnection
 from src.graph.data.tags import Tag
+from src.graph.data.topics import Topic
 from src.clustering import cluster_embeddings
 from src.openai import OpenAIInterface
 
@@ -38,6 +39,8 @@ def main(mytimer: func.TimerRequest) -> None:
     logging.info("Get Topic Name Per Cluster from Tags")
     openai_interface = OpenAIInterface()
     for cluster_id, tags in cluster_to_tags.items():
-        topic = openai_interface.get_topic_from_tags([tag.name for tag in tags])
-
-    print(topic)
+        topic_name = openai_interface.get_topic_from_tags([tag.name for tag in tags])
+        logging.info(f"Topic Name: {topic_name}")
+        topic = Topic(name=topic_name)
+        graph.add_node(topic)
+        graph.add_edges(tags, [topic], "belongs_to")
