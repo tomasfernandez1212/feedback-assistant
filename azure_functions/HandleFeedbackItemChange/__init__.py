@@ -5,6 +5,7 @@ import azure.functions as func
 
 from src.graph.connect import GraphConnection
 from src.graph.data.tags import Tag
+from src.graph.data.feedbackItems import FeedbackItem
 
 from src.openai import OpenAIInterface
 
@@ -16,7 +17,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     logging.info(f"Getting FeedbackItem with ID: {id}")
     graph = GraphConnection()
-    feedback_item = graph.get_node(id)
+    feedback_item = graph.get_node(id, FeedbackItem)
 
     logging.info("Getting Review")
     result = graph.traverse(feedback_item, "constituted_by")

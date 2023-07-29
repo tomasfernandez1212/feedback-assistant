@@ -16,7 +16,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     logging.info(f"Getting Review with ID: {id}")
     graph = GraphConnection()
-    review = graph.get_node(id)
+    review = graph.get_node(id, Review)
     if type(review) != Review:
         return func.HttpResponse(
             f"Node with ID: {id} is not a review.", status_code=404

@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import List, TypeVar, Type, Optional
+from typing import List, TypeVar, Type, Optional, Dict, Any
 from enum import Enum
 from src.graph.data import NodeType, ListNodesType, LABEL_TO_CLASS
 
@@ -66,20 +66,18 @@ class GraphConnection:
         result = json.dumps(callback.result().one()[0])  # type: ignore
         return result
 
-    def str_to_object(self, node_str: str) -> NodeType:
-        label = json.loads(node_str)["label"]
-        model_class = self.graph_label_to_class[label]
+    def str_to_object(self, node_str: str, type: Type[NodeTypeVar]) -> NodeTypeVar:
         node_json = json.loads(node_str)
         node_unpacked = node_json["properties"]
         for key, list_of_json in node_unpacked.items():
             node_unpacked[key] = list_of_json[0]["value"]
         node_unpacked["id"] = node_json["id"]
-        node = model_class.model_validate(node_unpacked)
+        node = type.model_validate(node_unpacked)
         return node
 
-    def get_node(self, id: str) -> NodeType:
+    def get_node(self, id: str, type: Type[NodeTypeVar]) -> NodeTypeVar:
         node_str = self.get_node_as_str(id)
-        node = self.str_to_object(node_str)
+        node = self.str_to_object(node_str, type)
         return node
 
     def get_all_nodes_by_type(self, type: Type[NodeTypeVar]) -> List[NodeTypeVar]:
@@ -89,7 +87,7 @@ class GraphConnection:
         nodes = []
         for node_dict in result:  # type: ignore
             node_str = json.dumps(node_dict)
-            node = self.str_to_object(node_str)
+            node = self.str_to_object(node_str, type)
             nodes.append(node)  # type: ignore
         return nodes  # type: ignore
 
@@ -187,8 +185,11 @@ class GraphConnection:
         query = f"g.V('{node.id}').out('{edge_label}')"
         callback = self.gremlin_client.submit(query)  # type: ignore
         future = callback.all()  # type: ignore
-        list_of_node_dicts = future.result()  # type: ignore
+        list_of_node_dicts: list[Dict[str, Any]] = future.result()  # type: ignore
         list_of_nodes = []
         for node_dict in list_of_node_dicts:  # type: ignore
-            list_of_nodes.append(self.str_to_object(json.dumps(node_dict)))  # type: ignore
+            expected_type = self.graph_label_to_class[node_dict["label"]]  # type: ignore
+            list_of_nodes.append(  # type: ignore
+                self.str_to_object(json.dumps(node_dict), expected_type)
+            )
         return list_of_nodes  # type: ignore
