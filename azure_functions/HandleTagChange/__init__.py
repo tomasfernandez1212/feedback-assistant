@@ -20,6 +20,9 @@ def main(mytimer: func.TimerRequest) -> None:
     logging.info("Loading Tags.")
     graph = GraphConnection()
     tags = graph.get_all_nodes_by_type(Tag)
+    if len(tags) == 0:
+        logging.info("No Tags Found. Ending.")
+        return
 
     logging.info("Constructing Embeddings Matrix")
     embeddings: List[List[float]] = []
