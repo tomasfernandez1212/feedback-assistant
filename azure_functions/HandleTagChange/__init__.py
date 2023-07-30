@@ -44,3 +44,4 @@ def main(mytimer: func.TimerRequest) -> None:
         topic = Topic(name=topic_name)
         graph.add_node(topic)
         graph.add_edges(tags, [topic], "belongs_to")
+        graph.add_edges([topic], tags, "contains")

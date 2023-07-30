@@ -176,6 +176,7 @@ class GraphConnection:
 
         self.add_nodes(tags)
         self.add_edges([feedback_item], tags, "has")
+        self.add_edges(tags, [feedback_item], "appears_in")  # reverse edge
 
     def traverse(self, node: NodeType, edge_label: str) -> List[Review]:
         query = f"g.V('{node.id}').out('{edge_label}')"
