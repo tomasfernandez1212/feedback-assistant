@@ -22,6 +22,7 @@ def main(mytimer: func.TimerRequest) -> None:
     tags = graph.get_all_nodes_by_type(Tag)
     if len(tags) == 0:
         logging.info("No Tags Found. Ending.")
+        graph.close()
         return
 
     logging.info("Constructing Embeddings Matrix")
@@ -46,3 +47,6 @@ def main(mytimer: func.TimerRequest) -> None:
         logging.info(f"Topic Name: {topic_name}")
         topic = Topic(name=topic_name)
         graph.add_topic_based_on_tags(topic, tags)
+
+    logging.info("Done")
+    graph.close()

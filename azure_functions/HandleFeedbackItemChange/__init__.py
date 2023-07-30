@@ -22,6 +22,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("Getting Review")
     result = graph.traverse(feedback_item, "constituted_by")
     if len(result) != 1:
+        graph.close()
         raise Exception(
             f"FeedbackItem is not constituted by exactly one element. Count: {len(result)}"
         )
@@ -39,5 +40,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     logging.info("Adding Tags to Graph")
     graph.add_tags_for_feedback_item(structured_tags, feedback_item)
+    graph.close()
 
     return func.HttpResponse(f"Hanlded FeedbackItem Change.", status_code=200)
