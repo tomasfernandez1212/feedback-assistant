@@ -42,6 +42,4 @@ def main(mytimer: func.TimerRequest) -> None:
         topic_name = openai_interface.get_topic_from_tags([tag.name for tag in tags])
         logging.info(f"Topic Name: {topic_name}")
         topic = Topic(name=topic_name)
-        graph.add_node(topic)
-        graph.add_edges(tags, [topic], "belongs_to")
-        graph.add_edges([topic], tags, "contains")
+        graph.add_topic_based_on_tags(topic, tags)

@@ -7,6 +7,7 @@ from src.graph.data import NodeType, ListNodesType, LABEL_TO_CLASS
 from src.graph.data.reviews import Review
 from src.graph.data.feedbackItems import FeedbackItem
 from src.graph.data.tags import Tag
+from src.graph.data.topics import Topic
 import os, sys, asyncio, json
 
 from gremlin_python.driver import client, serializer  # type: ignore
@@ -178,6 +179,20 @@ class GraphConnection:
         self.add_edges([feedback_item], tags, "has")
         self.add_edges(tags, [feedback_item], "appears_in")  # reverse edge
 
+    def add_topic_based_on_tags(self, topic: Topic, tags: List[Tag]):
+        """
+        Adds topic as a node, but also adds edges between topic and tags and between feedback items and topic.
+        """
+        self.add_node(topic)
+        self.add_edges(tags, [topic], "belongs_to")
+        self.add_edges([topic], tags, "contains")
+        for tag in tags:
+            feedback_items = self.traverse(tag, "appears_in")
+            for feedback_item in feedback_items:
+                if not self.check_if_edge_exists(feedback_item, topic, "informs"):
+                    self.add_edges([feedback_item], [topic], "informs")
+                    self.add_edges([topic], [feedback_item], "informed_by")
+
     def traverse(self, node: NodeType, edge_label: str) -> List[Review]:
         query = f"g.V('{node.id}').out('{edge_label}')"
         callback = self.gremlin_client.submit(query)  # type: ignore
@@ -190,3 +205,10 @@ class GraphConnection:
                 self.str_to_object(json.dumps(node_dict), expected_type)
             )
         return list_of_nodes  # type: ignore
+
+    def check_if_edge_exists(
+        self, from_node: NodeType, to_node: NodeType, edge_label: str
+    ) -> bool:
+        query = f"g.V('{from_node.id}').outE('{edge_label}').where(inV().hasId('{to_node.id}'))"
+        result_set = self.gremlin_client.submit(query)  # type: ignore
+        return len(result_set.all().result()) > 0  # type: ignore
