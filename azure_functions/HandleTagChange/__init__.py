@@ -21,7 +21,7 @@ def main(mytimer: func.TimerRequest) -> None:
     graph_strong = GraphConnection(strong_consistency=True)
     app_state = graph_strong.get_app_state()
     if app_state.tags_clustering_last_started > app_state.tags_last_modified:
-        logging.info("Tags Clustering Already Running. Ending.")
+        logging.info("Tags Clustering Already Started. Ending.")
         graph_strong.close()
         return
     else:
