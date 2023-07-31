@@ -7,18 +7,32 @@ from src.graph.data.tags import Tag
 from src.graph.data.topics import Topic
 from src.clustering import cluster_embeddings
 from src.openai import OpenAIInterface
+import time
 
 
 def main(mytimer: func.TimerRequest) -> None:
     logging.info("Starting timer function.")
+    current_time = time.time()
 
     if mytimer.past_due:
         logging.info("The timer was running late, but is the function is now running.")
 
-    logging.info("Connect to Graph")
+    logging.info("Getting Strongly Consistancy Graph and Checking App State")
+    graph_strong = GraphConnection(strong_consistency=True)
+    app_state = graph_strong.get_app_state()
+    if app_state.tags_clustering_last_started > app_state.tags_last_modified:
+        logging.info("Tags Clustering Already Running. Ending.")
+        graph_strong.close()
+        return
+    else:
+        app_state.tags_clustering_last_started = current_time
+        graph_strong.update_app_state(app_state)
+        graph_strong.close()
+
+    logging.info("Getting General Graph Connection")
+    graph = GraphConnection()
 
     logging.info("Loading Tags.")
-    graph = GraphConnection()
     tags = graph.get_all_nodes_by_type(Tag)
     if len(tags) == 0:
         logging.info("No Tags Found. Ending.")

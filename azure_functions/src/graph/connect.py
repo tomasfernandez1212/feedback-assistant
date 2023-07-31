@@ -8,6 +8,7 @@ from src.graph.data.reviews import Review
 from src.graph.data.feedbackItems import FeedbackItem
 from src.graph.data.tags import Tag
 from src.graph.data.topics import Topic
+from src.graph.data.state import AppState
 import os, sys, asyncio, json
 
 from gremlin_python.driver import client, serializer  # type: ignore
@@ -21,6 +22,8 @@ NodeTypeVar = TypeVar("NodeTypeVar", bound=NodeType)
 
 class GraphConnection:
     def __init__(self, strong_consistency: bool = False) -> None:
+        self.strong_consistency = strong_consistency
+
         preprend = "EVENTUAL_GRAPH"
         if strong_consistency:
             preprend = "STRONG_GRAPH"
@@ -92,6 +95,26 @@ class GraphConnection:
             nodes.append(node)  # type: ignore
         return nodes  # type: ignore
 
+    def add_properties_to_query(
+        self, query: str, node: NodeType, updating: bool = False
+    ) -> str:
+        for key, value in node.model_dump().items():
+            if updating and key == "id":
+                continue
+            if isinstance(value, str):
+                query += f".property('{key}', '{value}')"  # Quotes to indicate string
+            elif isinstance(value, list):
+                query += f".property('{key}', '{value.__str__()}')"  # Treat list as string to store as single property
+            elif isinstance(value, Enum):
+                query += f".property('{key}', {value.value})"  # Unpack the enum's value
+            else:
+                query += f".property('{key}', {value})"  # Assume it's a number
+
+        if not updating:
+            query += ".property('pk', 'pk')"
+
+        return query
+
     def add_node(self, node: NodeType, skip_existing: bool = True):
         label = type(node).__name__
 
@@ -103,18 +126,7 @@ class GraphConnection:
                 return
 
         query = f"g.addV('{label}')"
-
-        for key, value in node.model_dump().items():
-            if isinstance(value, str):
-                query += f".property('{key}', '{value}')"  # Quotes to indicate string
-            elif isinstance(value, list):
-                query += f".property('{key}', '{value.__str__()}')"  # Treat list as string to store as single property
-            elif isinstance(value, Enum):
-                query += f".property('{key}', {value.value})"  # Unpack the enum's value
-            else:
-                query += f".property('{key}', {value})"  # Assume it's a number
-
-        query += ".property('pk', 'pk')"
+        query = self.add_properties_to_query(query, node)
 
         callback = self.gremlin_client.submit(query)  # type: ignore
         result_set = callback.all()  # type: ignore
@@ -158,6 +170,24 @@ class GraphConnection:
                             time.sleep(RETRY_DELAY)  # wait before next attempt
                         else:
                             raise  # re-raise the last exception
+
+    def update_node(self, node: NodeType):
+        """
+        Updates a node in the graph. Assumes that the node already exists in the graph.
+        """
+        if not self.check_if_node_exists(node.id):
+            raise Exception(f"Node {node.id} does not exist.")
+
+        query = f"g.V('{node.id}')"
+        query = self.add_properties_to_query(query, node, updating=True)
+
+        result_set = self.gremlin_client.submit(query)  # type: ignore
+        result = result_set.all().result()  # type: ignore
+
+        if len(result) != 1:  # type: ignore
+            raise Exception(
+                f"Error updating node {node.id}. Expected 1 result, got {len(result)}."  # type: ignore
+            )
 
     def add_feedback_item(self, feedback_item: FeedbackItem, constituted_by: Review):
         """
@@ -212,3 +242,66 @@ class GraphConnection:
         query = f"g.V('{from_node.id}').outE('{edge_label}').where(inV().hasId('{to_node.id}'))"
         result_set = self.gremlin_client.submit(query)  # type: ignore
         return len(result_set.all().result()) > 0  # type: ignore
+
+    def get_app_state(self) -> AppState:
+        if not self.strong_consistency:
+            raise Exception(
+                "Cannot get app state in weakly consistent mode. Set strong_consistency=True when initialising GraphConnection."
+            )
+        query = f"g.V().hasLabel('AppState')"
+        result_set = self.gremlin_client.submit(query)  # type: ignore
+        result = result_set.all().result()  # type: ignore
+
+        if len(result) == 0:  # type: ignore
+            logging.info("No app state found in graph. Creating.")
+            app_state = AppState()
+            self.add_node(app_state)
+            return app_state
+
+        return self.str_to_object(json.dumps(result[0]), AppState)  # type: ignore
+
+    def init_app_state(self):
+        if not self.strong_consistency:
+            raise Exception(
+                "Cannot set app state in weakly consistent mode. Set strong_consistency=True when initialising GraphConnection."
+            )
+
+        if len(self.get_all_nodes_by_type(AppState)) > 0:
+            raise Exception("App state already exists in graph. Cannot initialise.")
+
+        app_state = AppState()
+        self.add_node(app_state)
+
+    def update_app_state(self, new_app_state: AppState):
+        if not self.strong_consistency:
+            raise Exception(
+                "Cannot set app state in weakly consistent mode. Set strong_consistency=True when initialising GraphConnection."
+            )
+
+        list_of_app_states_from_graph = self.get_all_nodes_by_type(AppState)
+        if len(list_of_app_states_from_graph) == 0:
+            raise Exception("App state does not exist in graph. Cannot update.")
+
+        app_state_from_graph = list_of_app_states_from_graph[0]
+        app_state_from_graph_dict = app_state_from_graph.model_dump()
+        new_app_state_dict = new_app_state.model_dump()
+
+        # Find keys that exist in both dictionaries, but have different values
+        changed_keys = {
+            key
+            for key in app_state_from_graph_dict
+            if app_state_from_graph_dict[key] != new_app_state_dict.get(key)
+        }
+
+        if len(changed_keys) == 0:
+            logging.info("No changes to app state.")
+            return
+
+        # Now, for each key in changed_keys, you can see the old and new value:
+        for key in changed_keys:
+            logging.info(
+                f"Key {key} changed from {app_state_from_graph_dict[key]} to {new_app_state_dict[key]}"
+            )
+
+        # Update the app state in the graph
+        self.update_node(new_app_state)

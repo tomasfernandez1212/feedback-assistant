@@ -1,5 +1,6 @@
 import logging
 from typing import List
+import time
 
 import azure.functions as func
 
@@ -41,5 +42,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("Adding Tags to Graph")
     graph.add_tags_for_feedback_item(structured_tags, feedback_item)
     graph.close()
+
+    logging.info("Getting Strongly Consistancy Graph and Updating App State")
+    graph_strong = GraphConnection(strong_consistency=True)
+    app_state = graph_strong.get_app_state()
+    app_state.tags_last_modified = time.time()
+    graph_strong.update_app_state(app_state)
+    graph_strong.close()
 
     return func.HttpResponse(f"Hanlded FeedbackItem Change.", status_code=200)
