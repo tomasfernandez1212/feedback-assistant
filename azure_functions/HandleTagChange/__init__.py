@@ -3,8 +3,8 @@ from typing import List
 
 import azure.functions as func
 from src.graph.connect import GraphConnection
-from src.graph.data.tags import Tag
-from src.graph.data.topics import Topic
+from src.data.tags import Tag
+from src.data.topics import Topic
 from src.clustering import cluster_embeddings
 from src.openai import OpenAIInterface
 import time

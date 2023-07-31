@@ -6,8 +6,8 @@ from unittest import mock
 from HandleFeedbackItemChange import main
 
 from src.graph.connect import GraphConnection
-from src.graph.data.reviews import Review, Rating, ReviewSource
-from src.graph.data.feedbackItems import FeedbackItem
+from src.data.reviews import Review, Rating, ReviewSource
+from src.data.feedbackItems import FeedbackItem
 
 
 class TestFeedbackItemChange(unittest.TestCase):

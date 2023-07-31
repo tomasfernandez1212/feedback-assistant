@@ -5,7 +5,7 @@ from unittest import mock
 
 from HandleReviewChange import main
 from src.graph.connect import GraphConnection
-from src.graph.data.reviews import Review, Rating, ReviewSource
+from src.data.reviews import Review, Rating, ReviewSource
 
 
 class TestHandleReviewChange(unittest.TestCase):

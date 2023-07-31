@@ -5,9 +5,9 @@ from unittest import mock
 
 from HandleTagChange import main
 from src.graph.connect import GraphConnection
-from src.graph.data.tags import Tag
-from src.graph.data.feedbackItems import FeedbackItem
-from src.graph.data.reviews import Review, Rating, ReviewSource
+from src.data.tags import Tag
+from src.data.feedbackItems import FeedbackItem
+from src.data.reviews import Review, Rating, ReviewSource
 import random
 
 

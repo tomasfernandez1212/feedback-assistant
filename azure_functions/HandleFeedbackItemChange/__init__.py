@@ -5,8 +5,8 @@ import time
 import azure.functions as func
 
 from src.graph.connect import GraphConnection
-from src.graph.data.tags import Tag
-from src.graph.data.feedbackItems import FeedbackItem
+from src.data.tags import Tag
+from src.data.feedbackItems import FeedbackItem
 
 from src.openai import OpenAIInterface
 

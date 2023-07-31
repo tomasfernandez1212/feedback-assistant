@@ -3,8 +3,8 @@ import logging
 import azure.functions as func
 
 from src.graph.connect import GraphConnection
-from src.graph.data.reviews import Review
-from src.graph.data.feedbackItems import FeedbackItem
+from src.data.reviews import Review
+from src.data.feedbackItems import FeedbackItem
 
 from src.openai import OpenAIInterface
 

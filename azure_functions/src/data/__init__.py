@@ -1,9 +1,9 @@
 from typing import Union, Sequence
-from src.graph.data.reviews import Review
-from src.graph.data.feedbackItems import FeedbackItem
-from src.graph.data.tags import Tag
-from src.graph.data.topics import Topic
-from src.graph.data.state import AppState
+from src.data.reviews import Review
+from src.data.feedbackItems import FeedbackItem
+from src.data.tags import Tag
+from src.data.topics import Topic
+from src.data.state import AppState
 
 # Create a Type for Any Graph Node
 NodeType = Union[Review, FeedbackItem, Tag, Topic, AppState]
