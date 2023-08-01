@@ -4,23 +4,22 @@ from typing import Callable, Any
 from unittest import mock
 
 from HandleReviewChange import main
-from src.graph.connect import GraphConnection
+from src.storage import Storage
 from src.data.reviews import Review, Rating, ReviewSource
 
 
 class TestHandleReviewChange(unittest.TestCase):
     def setup_method(self, method: Callable[[], Any]):
-        graph = GraphConnection()
-        graph.add_node(
-            Review(
-                text="I love this place! The food is amazing and the service is great!",
-                rating=Rating.FIVE,
-                date="2021-01-01T00:00:00Z",
-                source=ReviewSource.YELP,
-                source_review_id="9hHyzoRRlXr2tQFDXGSbmg",
+        with Storage() as storage:
+            storage.add_node(
+                Review(
+                    text="I love this place! The food is amazing and the service is great!",
+                    rating=Rating.FIVE,
+                    date="2021-01-01T00:00:00Z",
+                    source=ReviewSource.YELP,
+                    source_review_id="9hHyzoRRlXr2tQFDXGSbmg",
+                )
             )
-        )
-        graph.close()
 
     def teardown_method(self, method: Callable[[], Any]):
         pass

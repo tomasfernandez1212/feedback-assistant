@@ -17,14 +17,8 @@ def setup():
         os.environ["STRONG_GRAPH_GRAPH_NAME"] + "-test"
     )
 
-    from src.graph.connect import GraphConnection
+    from src.storage import Storage, Environment
 
     # Reset the eventual consistency test graph
-    graph = GraphConnection()
-    graph.reset_graph("feedback-assistant-test")
-    graph.close()
-
-    # Reset the strong consistency test graph
-    graph_strong = GraphConnection(strong_consistency=True)
-    graph_strong.reset_graph("feedback-assistant-strong-consistency-test")
-    graph_strong.close()
+    with Storage() as storage:
+        storage.reset_storage(environment=Environment.TEST)

@@ -7,7 +7,7 @@ import os
 from apify_client import ApifyClient
 from src.apify import YelpReviewsInterface
 
-from src.graph.connect import GraphConnection
+from src.storage import Storage
 
 
 def main(mytimer: func.TimerRequest) -> None:
@@ -28,8 +28,7 @@ def main(mytimer: func.TimerRequest) -> None:
     )
 
     # Add Reviews to Graph
-    graph = GraphConnection()
-    graph.add_nodes(structured_reviews)
-    graph.close()
+    with Storage() as storage:
+        storage.add_nodes(structured_reviews)
 
     logging.info("Done")

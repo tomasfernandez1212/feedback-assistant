@@ -1,4 +1,4 @@
-from typing import Union, Sequence
+from typing import Union, Sequence, TypeVar
 from src.data.reviews import Review
 from src.data.feedbackItems import FeedbackItem
 from src.data.tags import Tag
@@ -19,3 +19,5 @@ LABEL_TO_CLASS = {
     "Topic": Topic,
     "AppState": AppState,
 }
+
+NodeTypeVar = TypeVar("NodeTypeVar", bound=NodeType)
