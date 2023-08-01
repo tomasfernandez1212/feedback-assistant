@@ -1,7 +1,7 @@
 from src.graph.connect import GraphConnection
 from src.data import FeedbackItem
 from src.data import Review
-from src.data import Tag
+from src.data import DataPoint
 from src.data import Topic
 from src.data import AppState
 
@@ -105,24 +105,28 @@ class Storage:
         self.add_node(feedback_item)
         self.add_edges([feedback_item], [constituted_by], "constituted_by")
 
-    def add_tags_for_feedback_item(self, tags: List[Tag], feedback_item: FeedbackItem):
+    def add_data_points_for_feedback_item(
+        self, data_points: List[DataPoint], feedback_item: FeedbackItem
+    ):
         """
-        Adds tags as nodes, but also adds edges between feedback item and tags.
+        Adds data points as nodes, but also adds edges between feedback item and data points.
         """
 
-        self.add_nodes(tags)
-        self.add_edges([feedback_item], tags, "has")
-        self.add_edges(tags, [feedback_item], "appears_in")  # reverse edge
+        self.add_nodes(data_points)
+        self.add_edges([feedback_item], data_points, "derived")
+        self.add_edges(data_points, [feedback_item], "derived_from")  # reverse edge
 
-    def add_topic_based_on_tags(self, topic: Topic, tags: List[Tag]):
+    def add_topic_based_on_data_points(
+        self, topic: Topic, data_points: List[DataPoint]
+    ):
         """
-        Adds topic as a node, but also adds edges between topic and tags and between feedback items and topic.
+        Adds topic as a node, but also adds edges between topic and data points and between feedback items and topic.
         """
         self.add_node(topic)
-        self.add_edges(tags, [topic], "belongs_to")
-        self.add_edges([topic], tags, "contains")
-        for tag in tags:
-            feedback_items = self.traverse(tag, "appears_in")
+        self.add_edges(data_points, [topic], "belongs_to")
+        self.add_edges([topic], data_points, "contains")
+        for data_point in data_points:
+            feedback_items = self.traverse(data_point, "derived_from")
             for feedback_item in feedback_items:
                 if not self.check_if_edge_exists(feedback_item, topic, "informs"):
                     self.add_edges([feedback_item], [topic], "informs")

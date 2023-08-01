@@ -3,15 +3,15 @@ import azure.functions as func
 from typing import Callable, Any
 from unittest import mock
 
-from HandleTagChange import main
+from HandleDataPointChange import main
 from src.storage import Storage
-from src.data.tags import Tag
+from src.data.dataPoint import DataPoint
 from src.data.feedbackItems import FeedbackItem
 from src.data.reviews import Review, Rating, ReviewSource
 import random
 
 
-class TestHandleTagChange(unittest.TestCase):
+class TestHandleDataPointChange(unittest.TestCase):
     def setup_method(self, method: Callable[[], Any]):
         with Storage() as storage:
             review = Review(
@@ -23,22 +23,24 @@ class TestHandleTagChange(unittest.TestCase):
             )
             feedback_item = FeedbackItem(satisfaction_score=85, timestamp=345)
             storage.add_feedback_item(feedback_item, review)
-            tag_1 = Tag(
-                name="Great Atmosphere",
+            data_point_1 = DataPoint(
+                interpretation="Great Atmosphere",
                 embedding=f"{[random.random() for _ in range(1536)]}",
-                id="TAG_4048u",
+                id="DATAPOINT_4048u",
             )
-            tag_2 = Tag(
-                name="Pastries",
+            data_point_2 = DataPoint(
+                interpretation="Pastries",
                 embedding=f"{[random.random() for _ in range(1536)]}",
-                id="TAG_fh5894",
+                id="DATAPOINT_fh5894",
             )
-            storage.add_tags_for_feedback_item([tag_1, tag_2], feedback_item)
+            storage.add_data_points_for_feedback_item(
+                [data_point_1, data_point_2], feedback_item
+            )
 
     def teardown_method(self, method: Callable[[], Any]):
         pass
 
-    def test_handle_tag_change(self):
+    def test_handle_data_point_change(self):
         req = mock.Mock(spec=func.TimerRequest)
         req.past_due.return_value = False  # type: ignore
 

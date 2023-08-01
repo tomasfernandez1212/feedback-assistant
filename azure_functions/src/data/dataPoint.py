@@ -3,8 +3,8 @@ from uuid import uuid4
 from typing import Any
 
 
-class Tag(BaseModel):
-    name: str
+class DataPoint(BaseModel):
+    interpretation: str
     embedding: str  # Str for easier storage in Graph. Property can't be list of floats.
     id: str = ""
 

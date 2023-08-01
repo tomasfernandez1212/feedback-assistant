@@ -4,7 +4,7 @@ import time
 
 import azure.functions as func
 
-from src.data.tags import Tag
+from src.data.dataPoint import DataPoint
 from src.data.feedbackItems import FeedbackItem
 from src.storage import Storage
 
@@ -23,22 +23,24 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         logging.info("Getting FeedbackItem's Source")
         source = storage.get_feedback_item_source(feedback_item)
 
-        logging.info("Getting Tags")
+        logging.info("Getting Data Point")
         openai_interface = OpenAIInterface()
-        list_of_tags = openai_interface.get_list_of_tags(source.text)
+        list_of_data_points = openai_interface.get_list_of_data_points(source.text)
 
-        logging.info("Structuring Tags")
-        structured_tags: List[Tag] = []
-        for tag in list_of_tags:
-            embedding = openai_interface.get_embedding(tag)
-            structured_tags.append(Tag(name=tag, embedding=str(embedding)))
+        logging.info("Structuring Data Points")
+        structured_data_points: List[DataPoint] = []
+        for data_point in list_of_data_points:
+            embedding = openai_interface.get_embedding(data_point)
+            structured_data_points.append(
+                DataPoint(interpretation=data_point, embedding=str(embedding))
+            )
 
-        logging.info("Adding Tags to Graph")
-        storage.add_tags_for_feedback_item(structured_tags, feedback_item)
+        logging.info("Adding Data Points to Graph")
+        storage.add_data_points_for_feedback_item(structured_data_points, feedback_item)
 
         logging.info("Getting Strongly Consistancy Graph and Updating App State")
         app_state = storage.get_app_state()
-        app_state.tags_last_modified = time.time()
+        app_state.data_points_last_modified = time.time()
         storage.update_app_state(app_state)
 
         return func.HttpResponse(f"Hanlded FeedbackItem Change.", status_code=200)
