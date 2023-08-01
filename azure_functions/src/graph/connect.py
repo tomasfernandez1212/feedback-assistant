@@ -50,6 +50,11 @@ class GraphConnection:
         callback = self.gremlin_client.submit(query)  # type: ignore
         callback.one()  # type: ignore
 
+    def delete_node(self, id: str):
+        query = f"g.V('{id}').drop()"
+        callback = self.gremlin_client.submit(query)  # type: ignore
+        callback.one()  # type: ignore
+
     def check_if_node_exists(self, id: str) -> bool:
         query = f"g.V('{id}')"
         callback = self.gremlin_client.submit_async(query)  # type: ignore

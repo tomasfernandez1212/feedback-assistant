@@ -128,6 +128,11 @@ class Storage:
                     self.add_edges([feedback_item], [topic], "informs")
                     self.add_edges([topic], [feedback_item], "informed_by")
 
+    def clear_topics(self):
+        topics = self.get_all_nodes_by_type(Topic)
+        for topic in topics:
+            self._get_graph(Topic).delete_node(topic.id)
+
     def get_feedback_item_source(self, feedback_item: FeedbackItem) -> Review:
         result = self.traverse(feedback_item, "constituted_by")
         if len(result) != 1:
