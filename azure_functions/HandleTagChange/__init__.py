@@ -59,7 +59,7 @@ def main(mytimer: func.TimerRequest) -> None:
             )
             topic = Topic(name=topic_name)
             storage.add_topic_based_on_tags(topic, tags)
-            logging.info("Topic:", topic_name)
-            logging.info("Tags:", [tag.name for tag in tags])
+            logging.info(f"Topic: {topic_name}")
+            logging.info(f"Tags: {[tag.name for tag in tags]}")
 
         logging.info("Done")
