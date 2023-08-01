@@ -48,7 +48,10 @@ def main(mytimer: func.TimerRequest) -> None:
                 cluster_to_tags[cluster_id] = []
             cluster_to_tags[cluster_id].append(tag)
 
-        logging.info("Get Topic Name Per Cluster from Tags")
+        logging.info("Clearing Topics")
+        storage.clear_topics()
+
+        logging.info("Get Topic Name And Add to Storage")
         openai_interface = OpenAIInterface()
         for cluster_id, tags in cluster_to_tags.items():
             topic_name = openai_interface.get_topic_from_tags(
