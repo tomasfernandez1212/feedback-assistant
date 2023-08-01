@@ -54,8 +54,9 @@ def main(mytimer: func.TimerRequest) -> None:
             topic_name = openai_interface.get_topic_from_tags(
                 [tag.name for tag in tags]
             )
-            logging.info(f"Topic Name: {topic_name}")
             topic = Topic(name=topic_name)
             storage.add_topic_based_on_tags(topic, tags)
+            logging.info("Topic:", topic_name)
+            logging.info("Tags:", [tag.name for tag in tags])
 
         logging.info("Done")
