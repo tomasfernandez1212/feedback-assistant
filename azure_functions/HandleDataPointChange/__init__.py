@@ -57,9 +57,12 @@ def main(mytimer: func.TimerRequest) -> None:
         logging.info("Get Topic Name And Add to Storage")
         openai_interface = OpenAIInterface()
         for cluster_id, data_points in cluster_to_data_points.items():
-            topic_name = openai_interface.get_topic_from_data_points(
-                [data_point.interpretation for data_point in data_points]
-            )
+            if cluster_id == -1:
+                topic_name = "Miscellaneous"
+            else:
+                topic_name = openai_interface.get_topic_from_data_points(
+                    [data_point.interpretation for data_point in data_points]
+                )
             topic = Topic(name=topic_name)
             storage.add_topic_based_on_data_points(topic, data_points)
             logging.info(f"Topic: {topic_name}")
