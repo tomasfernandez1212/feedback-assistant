@@ -26,7 +26,7 @@ class TestHandleReviewChange(unittest.TestCase):
 
     def test_handle_review_change(self):
         req = mock.Mock(spec=func.HttpRequest)
-        req.get_json.return_value = {"id": "YELP_9hHyzoRRlXr2tQFDXGSbmg"}  # type: ignore
+        req.get_json.return_value = {"id": "Review_YELP_9hHyzoRRlXr2tQFDXGSbmg"}  # type: ignore
 
         resp = main(req)
         assert resp.status_code == 200

@@ -9,5 +9,5 @@ class Topic(BaseModel):
 
     def model_post_init(self, __context: Any) -> None:
         if self.id == "":
-            self.id: str = str(uuid4())
+            self.id: str = f"{self.__class__.__name__}_{str(uuid4())}"
         return super().model_post_init(__context)
