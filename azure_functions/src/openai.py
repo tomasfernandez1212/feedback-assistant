@@ -86,7 +86,9 @@ class OpenAIInterface:
         embeddings = response["data"][0]["embedding"]  # type: ignore
         return embeddings  # type: ignore
 
-    def get_topic_from_data_points(self, data_points: List[str]) -> str:
+    def get_topic_from_data_points(
+        self, data_points: List[str], limit_points: int = 15
+    ) -> str:
         response = openai.ChatCompletion.create(  # type: ignore
             model="gpt-3.5-turbo-0613",
             messages=[
@@ -103,7 +105,7 @@ class OpenAIInterface:
                 },
                 {
                     "role": "user",
-                    "content": f"What is the overarching topic from these data points: {data_points}",
+                    "content": f"What is the overarching topic from these data points: {data_points[:limit_points]}",
                 },
             ],
             functions=[
