@@ -11,3 +11,5 @@ requests
 openai[datalib]
 pytest
 hdbscan
+ipykernel 
+numpy
