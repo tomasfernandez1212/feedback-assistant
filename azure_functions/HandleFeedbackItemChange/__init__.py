@@ -1,5 +1,4 @@
 import logging
-from typing import List
 import time
 
 import azure.functions as func
@@ -23,20 +22,26 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         logging.info("Getting FeedbackItem's Source")
         source = storage.get_feedback_item_source(feedback_item)
 
-        logging.info("Getting Data Point")
+        logging.info("Getting Text For Data Points")
         openai_interface = OpenAIInterface()
-        list_of_data_points = openai_interface.get_list_of_data_points(source.text)
+        data_points_text = openai_interface.get_data_points_text(source.text)
 
-        logging.info("Structuring Data Points")
-        structured_data_points: List[DataPoint] = []
-        for data_point in list_of_data_points:
-            embedding = openai_interface.get_embedding(data_point)
-            structured_data_points.append(
-                DataPoint(interpretation=data_point, embedding=str(embedding))
+        for data_point_text in data_points_text:
+            logging.info("Getting Embedding")
+            embedding = openai_interface.get_embedding(data_point_text)
+
+            logging.info("Creating Data Point")
+            data_point = DataPoint(
+                interpretation=data_point_text, embedding=str(embedding)
             )
 
-        logging.info("Adding Data Points to Graph")
-        storage.add_data_points_for_feedback_item(structured_data_points, feedback_item)
+            logging.info("Scoring Data Point")
+            scores = openai_interface.get_scores(data_point_text, source.text)
+
+            logging.info("Adding to Storage")
+            storage.add_data_point_for_feedback_item(data_point, feedback_item)
+            for score in scores:
+                storage.add_score(data_point, score)
 
         logging.info("Getting Strongly Consistancy Graph and Updating App State")
         app_state = storage.get_app_state()

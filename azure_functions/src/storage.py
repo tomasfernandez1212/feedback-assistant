@@ -1,9 +1,10 @@
 from src.graph.connect import GraphConnection
 from src.data import FeedbackItem
 from src.data import Review
-from src.data import DataPoint
 from src.data import Topic
 from src.data import AppState
+from src.data import DataPoint
+from src.data import Score
 
 from src.data import ListNodesType, NodeType, NodeTypeVar
 
@@ -105,16 +106,24 @@ class Storage:
         self.add_node(feedback_item)
         self.add_edges([feedback_item], [constituted_by], "constituted_by")
 
-    def add_data_points_for_feedback_item(
-        self, data_points: List[DataPoint], feedback_item: FeedbackItem
+    def add_data_point_for_feedback_item(
+        self, data_point: DataPoint, feedback_item: FeedbackItem
     ):
         """
-        Adds data points as nodes, but also adds edges between feedback item and data points.
+        Adds data point as node, but also adds edges between feedback item and data point.
         """
 
-        self.add_nodes(data_points)
-        self.add_edges([feedback_item], data_points, "derived")
-        self.add_edges(data_points, [feedback_item], "derived_from")  # reverse edge
+        self.add_node(data_point)
+        self.add_edges([feedback_item], [data_point], "derived")
+        self.add_edges([data_point], [feedback_item], "derived_from")  # reverse edge
+
+    def add_score(self, node: NodeType, score: Score):
+        """
+        Adds score for node, but also adds edges between score and node being scored.
+        """
+        self.add_node(score)
+        self.add_edges([score], [node], "scores_for")
+        self.add_edges([node], [score], "scored_by")
 
     def add_topic_based_on_data_points(
         self, topic: Topic, data_points: List[DataPoint]

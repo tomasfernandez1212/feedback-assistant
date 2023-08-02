@@ -1,6 +1,7 @@
 import openai
 import json
 from typing import List
+from src.data.scores import Score
 
 
 class OpenAIInterface:
@@ -38,7 +39,7 @@ class OpenAIInterface:
         score: int = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])["score"]  # type: ignore
         return score  # type: ignore
 
-    def get_list_of_data_points(self, text: str) -> list[str]:
+    def get_data_points_text(self, text: str) -> list[str]:
         response = openai.ChatCompletion.create(  # type: ignore
             model="gpt-3.5-turbo-0613",
             messages=[
@@ -80,6 +81,102 @@ class OpenAIInterface:
 
         list_of_data_points: List[str] = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])["data_points"]  # type: ignore
         return list_of_data_points  # type: ignore
+
+    def get_scores(self, statement: str, feedback_item: str) -> List[Score]:
+        # TODO: This could potentially be score for all the statements, not just one.
+        response = openai.ChatCompletion.create(  # type: ignore
+            model="gpt-3.5-turbo-0613",
+            messages=[
+                {
+                    "role": "system",
+                    "content": """
+                    You are an expert in customer service. You will be given a customer's feedback (For example in the form of a review, a messages, or a conversation with us) and you will also be given a statement derived from that feedback item.
+
+                    Determine the following scores on a scale from 0 to 100:
+
+                    1. The customer's satisfaction score regarding that statement (0 = Utterly dissatisfied, 50 = neutral, 100 = Absolutely Satisfied).
+                    2. How vague or specific the customer's comment was regarding that statement (0 = Vague, 100 = Highly detailed).
+                    3. The impact score the statement has on the business (0 = Not important, 100 = Critical)
+                    """,
+                },
+                {
+                    "role": "user",
+                    "content": f"FEEDBACK ITEM: {feedback_item} \n\n DERIVED STATEMENT: \n {statement}",
+                },
+            ],
+            functions=[
+                {
+                    "name": "report_scores",
+                    "description": "Used to report scores to the system.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "satisfaction": {
+                                "type": "object",
+                                "properties": {
+                                    "score": {
+                                        "type": "integer",
+                                        "description": "The customer's satisfaction score regarding that statement. It is a relative score from 0 to 100 where 50 is neutral, 0 is very negative, and 100 is very positive.",
+                                        "minimum": 0,
+                                        "maximum": 100,
+                                    },
+                                    "explanation": {
+                                        "type": "string",
+                                        "description": "An explanation for the provided score.",
+                                    },
+                                },
+                            },
+                            "specificity": {
+                                "type": "object",
+                                "properties": {
+                                    "score": {
+                                        "type": "integer",
+                                        "description": "How vague or specific the customer's comment was regarding that statement. It is a relative score from 0 to 100 where 50 is neutral, 0 is very vague, and 100 is very specific.",
+                                        "minimum": 0,
+                                        "maximum": 100,
+                                    },
+                                    "explanation": {
+                                        "type": "string",
+                                        "description": "An explanation for the provided score.",
+                                    },
+                                },
+                            },
+                            "impact": {
+                                "type": "object",
+                                "properties": {
+                                    "score": {
+                                        "type": "integer",
+                                        "description": "Indicates the impact this statement has on the business if true. It is a relative score from 0 to 100 where 0 is not impactful or significant and 100 is highly impactful (whether positively or negatively).",
+                                        "minimum": 0,
+                                        "maximum": 100,
+                                    },
+                                    "explanation": {
+                                        "type": "string",
+                                        "description": "An explanation for the provided score.",
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    "required": ["satisfaction", "specificity", "impact"],
+                }
+            ],
+            function_call={"name": "report_scores"},
+        )
+
+        result_json = response["choices"][0]["message"]["function_call"]["arguments"]  # type: ignore
+
+        scores_dict = json.loads(result_json)  # type: ignore
+        list_of_scores: List[Score] = []
+        for score_name, score_dict in scores_dict.items():
+            score = Score(
+                name=score_name,
+                score=score_dict["score"],
+                explanation=score_dict["explanation"],
+            )
+            list_of_scores.append(score)
+
+        return list_of_scores  # type: ignore
 
     def get_embedding(self, text: str) -> List[float]:
         response = openai.Embedding.create(input=text, model="text-embedding-ada-002")  # type: ignore

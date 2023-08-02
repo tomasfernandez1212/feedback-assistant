@@ -33,9 +33,8 @@ class TestHandleDataPointChange(unittest.TestCase):
                 embedding=f"{[random.random() for _ in range(1536)]}",
                 id="DATAPOINT_fh5894",
             )
-            storage.add_data_points_for_feedback_item(
-                [data_point_1, data_point_2], feedback_item
-            )
+            storage.add_data_point_for_feedback_item(data_point_1, feedback_item)
+            storage.add_data_point_for_feedback_item(data_point_2, feedback_item)
 
     def teardown_method(self, method: Callable[[], Any]):
         pass
