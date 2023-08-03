@@ -20,9 +20,4 @@ class Review(BaseModel):
 
     def model_post_init(self, __context: Any) -> None:
         self.id: str = f"{self.__class__.__name__}_{self.source.name}_{self.source_review_id}"  # Add ID
-        self.text: str = self._clean_text(self.text)  # Clean Text
         return super().model_post_init(__context)
-
-    def _clean_text(self, text: str) -> str:
-        text = text.replace("\n", "\\n").replace("'", "\\'")
-        return text

@@ -101,9 +101,13 @@ class GraphConnection:
             if updating and key == "id":
                 continue
             if isinstance(value, str):
-                query += f".property('{key}', '{value}')"  # Quotes to indicate string
+                escaped_value = value.replace("'", "\\'")  # Escape single quotes
+                query += f".property('{key}', '{escaped_value}')"  # Quotes to indicate string
             elif isinstance(value, list):
-                query += f".property('{key}', '{value.__str__()}')"  # Treat list as string to store as single property
+                escaped_value = value.__str__().replace(
+                    "'", "\\'"
+                )  # Escape single quotes in the list as string
+                query += f".property('{key}', '{escaped_value}')"  # Treat list as string to store as single property
             elif isinstance(value, Enum):
                 query += f".property('{key}', {value.value})"  # Unpack the enum's value
             else:
