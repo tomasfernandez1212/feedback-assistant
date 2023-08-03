@@ -15,15 +15,15 @@ class TestFeedbackItemChange(unittest.TestCase):
         with Storage() as storage:
             # Add FeedbackItem with Edge
             review = Review(
-                text="I didn't like this place! The food is bad and the service is terrible!",
-                rating=Rating.ONE,
+                text="It looks a bit hole-in-the-wall but has a lovely back patio with heaters. You order at the front and they give you a number, so it's a fast-casual vibe.",
+                rating=Rating.FOUR,
                 date="2020-01-01T00:00:00Z",
                 source=ReviewSource.YELP,
                 source_review_id="7hHyzoRRlXr2tQFDXGSbmg",
             )
             storage.add_node(review)
             feedback_item = FeedbackItem(
-                satisfaction_score=5, timestamp=123, id="feedback_item_id"
+                satisfaction_score=80, timestamp=123, id="feedback_item_id"
             )
             storage.add_feedback_item(feedback_item, constituted_by=review)
 

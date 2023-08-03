@@ -13,7 +13,7 @@ class TestHandleReviewChange(unittest.TestCase):
         with Storage() as storage:
             storage.add_node(
                 Review(
-                    text="I love this place! The food is amazing and the service is great!",
+                    text="The staff are very sweet and helpful, too. There aren't large tables, so would recommend going with a smaller group. The food is fresh and healthy, with a selection of salads and gyros!",
                     rating=Rating.FIVE,
                     date="2021-01-01T00:00:00Z",
                     source=ReviewSource.YELP,
