@@ -36,7 +36,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             )
 
             logging.info("Scoring Data Point")
-            scores = openai_interface.get_scores(data_point_text, source.text)
+            scores = openai_interface.score_data_point_all_types(
+                data_point_text, source.text
+            )
 
             logging.info("Adding to Storage")
             storage.add_data_point_for_feedback_item(data_point, feedback_item)

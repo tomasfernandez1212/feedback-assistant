@@ -1,7 +1,14 @@
 import openai
 import json
 from typing import List
+from enum import Enum
 from src.data.scores import Score
+
+
+class ScoreType(Enum):
+    SATISFACTION = "Satifaction"
+    SPECIFICITY = "Specificity"
+    BUSINESS_IMPACT = "Business Impact"
 
 
 class OpenAIInterface:
@@ -81,6 +88,94 @@ class OpenAIInterface:
 
         list_of_data_points: List[str] = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])["data_points"]  # type: ignore
         return list_of_data_points  # type: ignore
+
+    def score_data_point(
+        self, data_point: str, feedback_item: str, score_type: ScoreType
+    ) -> Score:
+        score_name = f"{score_type.value} Score"
+        system_message = (
+            "You are an expert in customer service. Your task is to report a score."
+        )
+        model_name = "gpt-3.5-turbo-0613"
+        range_min = 0
+        range_middle = 50
+        range_max = 100
+        if score_type == ScoreType.SATISFACTION:
+            range_min_description = "very negative"
+            range_middle_description = "neutral"
+            range_max_description = "very positive"
+        elif score_type == ScoreType.SPECIFICITY:
+            range_min_description = "not specific (lacking constructive detail)"
+            range_middle_description = "somewhat specific"
+            range_max_description = "very specific (highly constructive feedback)"
+        elif score_type == ScoreType.BUSINESS_IMPACT:
+            range_min_description = "not impactful on business outcomes"
+            range_middle_description = "somewhat important"
+            range_max_description = (
+                "high severity (very impactful on business outcomes)"
+            )
+
+        messages = [
+            {
+                "role": "system",
+                "content": system_message,
+            },
+            {
+                "role": "user",
+                "content": f"""Here is something a customer said about their experience with us:\n{feedback_item}\n\nFrom this feedback, we have the following takeaway:\n{data_point}\n\nFrom that takeaway, report the customer's {score_name} on a continuous scale from {range_min} to {range_max}.\n\n{range_min} is {range_min_description}, {range_middle} is {range_middle_description}, and {range_max} is {range_max_description}.""",
+            },
+        ]
+        functions = [
+            {
+                "name": "report_score",
+                "description": "Used to report the requested score.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "score": {
+                            "type": "integer",
+                            "description": f"The customer's {score_name} regarding that statement. It is a relative score from {range_min} to {range_max} where {range_min} is {range_min_description}, {range_middle} is {range_middle_description}, and {range_max} is {range_max_description}.",
+                            "minimum": range_min,
+                            "maximum": range_max,
+                        },
+                        "explanation": {
+                            "type": "string",
+                            "description": "An explanation for the provided score.",
+                        },
+                    },
+                    "required": ["score", "explanation"],
+                },
+            }
+        ]
+
+        function_call = {"name": "report_score"}
+
+        response = openai.ChatCompletion.create(  # type: ignore
+            model=model_name,
+            messages=messages,
+            functions=functions,
+            function_call=function_call,
+        )
+
+        result_json = response["choices"][0]["message"]["function_call"]["arguments"]  # type: ignore
+
+        score: int = json.loads(result_json)["score"]  # type: ignore
+        explanation: str = json.loads(result_json)["explanation"]  # type: ignore
+
+        return Score(name=score_name, score=score, explanation=explanation)
+
+    def score_data_point_all_types(
+        self, data_point: str, feedback_item: str
+    ) -> List[Score]:
+        scores: List[Score] = []
+        for score_type in ScoreType:
+            score = self.score_data_point(
+                data_point=data_point,
+                feedback_item=feedback_item,
+                score_type=score_type,
+            )
+            scores.append(score)
+        return scores
 
     def get_scores(self, statement: str, feedback_item: str) -> List[Score]:
         # TODO: This could potentially be score for all the statements, not just one.
