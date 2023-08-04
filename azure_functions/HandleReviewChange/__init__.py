@@ -6,8 +6,6 @@ from src.storage import Storage
 from src.data.reviews import Review
 from src.data.feedbackItems import FeedbackItem
 
-from src.openai import OpenAIInterface
-
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("Unpacking Request Body")
@@ -22,13 +20,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 f"Node with ID: {id} is not a review.", status_code=404
             )
 
-        logging.info("Getting Satisfaction Score")
-        openai_interface = OpenAIInterface()
-        score = openai_interface.get_satisfaction_score(review.text)
-
         logging.info("Creating Feedback Item")
         feedback_item = FeedbackItem(
-            satisfaction_score=score,
             timestamp=123,  # TODO: Get timestamp from review
         )
 
