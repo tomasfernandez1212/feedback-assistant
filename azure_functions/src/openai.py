@@ -1,14 +1,55 @@
 import openai
 import json
-from typing import List
+from typing import List, Dict, Any, Tuple
 from enum import Enum
 from src.data.scores import Score
+from pydantic import BaseModel
+
+
+class ScoreConfig(BaseModel):
+    name: str
+    range_min: int
+    range_middle: int
+    range_max: int
+    range_min_description: str
+    range_middle_description: str
+    range_max_description: str
+    var_name: str = ""
+
+    def model_post_init(self, __context: Any) -> None:
+        if self.var_name == "":
+            self.var_name: str = self.name.lower().replace(" ", "_")
+        return super().model_post_init(__context)
 
 
 class ScoreType(Enum):
-    SATISFACTION = "Satifaction"
-    SPECIFICITY = "Specificity"
-    BUSINESS_IMPACT = "Business Impact"
+    SATISFACTION = ScoreConfig(
+        name="Satisfaction",
+        range_min=0,
+        range_middle=50,
+        range_max=100,
+        range_min_description="very negative",
+        range_middle_description="neutral",
+        range_max_description="very positive",
+    )
+    SPECIFICITY = ScoreConfig(
+        name="Specificity",
+        range_min=0,
+        range_middle=50,
+        range_max=100,
+        range_min_description="not specific (lacking constructive detail)",
+        range_middle_description="somewhat specific",
+        range_max_description="very specific (highly constructive feedback)",
+    )
+    BUSINESS_IMPACT = ScoreConfig(
+        name="Business Impact",
+        range_min=0,
+        range_middle=50,
+        range_max=100,
+        range_min_description="not impactful on business outcomes",
+        range_middle_description="somewhat important",
+        range_max_description="high severity (very impactful on business outcomes)",
+    )
 
 
 class OpenAIInterface:
@@ -89,66 +130,64 @@ class OpenAIInterface:
         list_of_data_points: List[str] = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])["data_points"]  # type: ignore
         return list_of_data_points  # type: ignore
 
-    def score_data_point(
-        self, data_point: str, feedback_item: str, score_type: ScoreType
-    ) -> Score:
-        score_name = f"{score_type.value} Score"
-        system_message = (
-            "You are an expert in customer service. Your task is to report a score."
-        )
-        model_name = "gpt-3.5-turbo-0613"
-        range_min = 0
-        range_middle = 50
-        range_max = 100
-        if score_type == ScoreType.SATISFACTION:
-            range_min_description = "very negative"
-            range_middle_description = "neutral"
-            range_max_description = "very positive"
-        elif score_type == ScoreType.SPECIFICITY:
-            range_min_description = "not specific (lacking constructive detail)"
-            range_middle_description = "somewhat specific"
-            range_max_description = "very specific (highly constructive feedback)"
-        elif score_type == ScoreType.BUSINESS_IMPACT:
-            range_min_description = "not impactful on business outcomes"
-            range_middle_description = "somewhat important"
-            range_max_description = (
-                "high severity (very impactful on business outcomes)"
+    def _generate_score_properties_and_required(
+        self,
+        score_types: List[ScoreType],
+    ) -> Tuple[Dict[str, Dict[str, Any]], List[str]]:
+        properties: Dict[str, Dict[str, Any]] = {}
+        required: List[str] = []
+
+        for score_type in score_types:
+            properties.update(
+                {
+                    f"{score_type.value.var_name}_score": {
+                        "type": "integer",
+                        "description": f"The customer's {score_type.value.name} Score regarding that statement. It is a relative score from {score_type.value.range_min} to {score_type.value.range_max} where {score_type.value.range_min} is {score_type.value.range_min_description}, {score_type.value.range_middle} is {score_type.value.range_middle_description}, and {score_type.value.range_max} is {score_type.value.range_max_description}.",
+                        "minimum": score_type.value.range_min,
+                        "maximum": score_type.value.range_max,
+                    },
+                    f"{score_type.value.var_name}_explanation": {
+                        "type": "string",
+                        "description": "An explanation for the provided score.",
+                    },
+                }
             )
+            required.append(f"{score_type.value.var_name}_score")
+            required.append(f"{score_type.value.var_name}_explanation")
+
+        return (properties, required)
+
+    def score_data_point(
+        self, data_point: str, feedback_item: str, score_types: List[ScoreType]
+    ) -> List[Score]:
+        model_name = "gpt-3.5-turbo-0613"
 
         messages = [
             {
                 "role": "system",
-                "content": system_message,
+                "content": "You are an expert in customer service. Your task is to report a score.",
             },
             {
                 "role": "user",
-                "content": f"""Here is something a customer said about their experience with us:\n{feedback_item}\n\nFrom this feedback, we have the following takeaway:\n{data_point}\n\nFrom that takeaway, report the customer's {score_name} on a continuous scale from {range_min} to {range_max}.\n\n{range_min} is {range_min_description}, {range_middle} is {range_middle_description}, and {range_max} is {range_max_description}.""",
+                "content": f"""Here is something a customer said about their experience with us:\n{feedback_item}\n\nFrom this feedback, we have the following takeaway:\n{data_point}\n\nFrom that takeaway, report the customer's scores on a continuous scale.""",
             },
         ]
+
+        properties, required = self._generate_score_properties_and_required(score_types)
+
         functions = [
             {
-                "name": "report_score",
-                "description": "Used to report the requested score.",
+                "name": "report_scores",
+                "description": "Used to report the requested scores.",
                 "parameters": {
                     "type": "object",
-                    "properties": {
-                        "score": {
-                            "type": "integer",
-                            "description": f"The customer's {score_name} regarding that statement. It is a relative score from {range_min} to {range_max} where {range_min} is {range_min_description}, {range_middle} is {range_middle_description}, and {range_max} is {range_max_description}.",
-                            "minimum": range_min,
-                            "maximum": range_max,
-                        },
-                        "explanation": {
-                            "type": "string",
-                            "description": "An explanation for the provided score.",
-                        },
-                    },
-                    "required": ["score", "explanation"],
+                    "properties": properties,
+                    "required": required,
                 },
             }
         ]
 
-        function_call = {"name": "report_score"}
+        function_call = {"name": "report_scores"}
 
         response = openai.ChatCompletion.create(  # type: ignore
             model=model_name,
@@ -157,121 +196,18 @@ class OpenAIInterface:
             function_call=function_call,
         )
 
-        result_json = response["choices"][0]["message"]["function_call"]["arguments"]  # type: ignore
+        result = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])  # type: ignore
 
-        score: int = json.loads(result_json)["score"]  # type: ignore
-        explanation: str = json.loads(result_json)["explanation"]  # type: ignore
-
-        return Score(name=score_name, score=score, explanation=explanation)
-
-    def score_data_point_all_types(
-        self, data_point: str, feedback_item: str
-    ) -> List[Score]:
         scores: List[Score] = []
-        for score_type in ScoreType:
-            score = self.score_data_point(
-                data_point=data_point,
-                feedback_item=feedback_item,
-                score_type=score_type,
+        for score_type in score_types:
+            score = Score(
+                name=score_type.value.name,
+                score=result[score_type.value.var_name + "_score"],
+                explanation=result[score_type.value.var_name + "_explanation"],
             )
             scores.append(score)
+
         return scores
-
-    def get_scores(self, statement: str, feedback_item: str) -> List[Score]:
-        # TODO: This could potentially be score for all the statements, not just one.
-        response = openai.ChatCompletion.create(  # type: ignore
-            model="gpt-3.5-turbo-0613",
-            messages=[
-                {
-                    "role": "system",
-                    "content": """
-                    You are an expert in customer service. You will be given a customer's feedback (For example in the form of a review, a messages, or a conversation with us) and you will also be given a statement derived from that feedback item.
-
-                    Determine the following scores on a scale from 0 to 100:
-
-                    1. The customer's satisfaction score regarding that statement (0 = Utterly dissatisfied, 50 = neutral, 100 = Absolutely Satisfied).
-                    2. How vague or specific the customer's comment was regarding that statement (0 = Vague, 100 = Highly detailed).
-                    3. The impact score the statement has on the business (0 = Not important, 100 = Critical)
-                    """,
-                },
-                {
-                    "role": "user",
-                    "content": f"FEEDBACK ITEM: {feedback_item} \n\n DERIVED STATEMENT: \n {statement}",
-                },
-            ],
-            functions=[
-                {
-                    "name": "report_scores",
-                    "description": "Used to report scores to the system.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "satisfaction": {
-                                "type": "object",
-                                "properties": {
-                                    "score": {
-                                        "type": "integer",
-                                        "description": "The customer's satisfaction score regarding that statement. It is a relative score from 0 to 100 where 50 is neutral, 0 is very negative, and 100 is very positive.",
-                                        "minimum": 0,
-                                        "maximum": 100,
-                                    },
-                                    "explanation": {
-                                        "type": "string",
-                                        "description": "An explanation for the provided score.",
-                                    },
-                                },
-                            },
-                            "specificity": {
-                                "type": "object",
-                                "properties": {
-                                    "score": {
-                                        "type": "integer",
-                                        "description": "How vague or specific the customer's comment was regarding that statement. It is a relative score from 0 to 100 where 50 is neutral, 0 is very vague, and 100 is very specific.",
-                                        "minimum": 0,
-                                        "maximum": 100,
-                                    },
-                                    "explanation": {
-                                        "type": "string",
-                                        "description": "An explanation for the provided score.",
-                                    },
-                                },
-                            },
-                            "impact": {
-                                "type": "object",
-                                "properties": {
-                                    "score": {
-                                        "type": "integer",
-                                        "description": "Indicates the impact this statement has on the business if true. It is a relative score from 0 to 100 where 0 is not impactful or significant and 100 is highly impactful (whether positively or negatively).",
-                                        "minimum": 0,
-                                        "maximum": 100,
-                                    },
-                                    "explanation": {
-                                        "type": "string",
-                                        "description": "An explanation for the provided score.",
-                                    },
-                                },
-                            },
-                        },
-                    },
-                    "required": ["satisfaction", "specificity", "impact"],
-                }
-            ],
-            function_call={"name": "report_scores"},
-        )
-
-        result_json = response["choices"][0]["message"]["function_call"]["arguments"]  # type: ignore
-
-        scores_dict = json.loads(result_json)  # type: ignore
-        list_of_scores: List[Score] = []
-        for score_name, score_dict in scores_dict.items():
-            score = Score(
-                name=score_name,
-                score=score_dict["score"],
-                explanation=score_dict["explanation"],
-            )
-            list_of_scores.append(score)
-
-        return list_of_scores  # type: ignore
 
     def get_embedding(self, text: str) -> List[float]:
         response = openai.Embedding.create(input=text, model="text-embedding-ada-002")  # type: ignore

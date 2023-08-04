@@ -7,7 +7,7 @@ from src.data.dataPoint import DataPoint
 from src.data.feedbackItems import FeedbackItem
 from src.storage import Storage
 
-from src.openai import OpenAIInterface
+from src.openai import OpenAIInterface, ScoreType
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -36,8 +36,14 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             )
 
             logging.info("Scoring Data Point")
-            scores = openai_interface.score_data_point_all_types(
-                data_point_text, source.text
+            scores = openai_interface.score_data_point(
+                data_point_text,
+                source.text,
+                [
+                    ScoreType.SATISFACTION,
+                    ScoreType.SPECIFICITY,
+                    ScoreType.BUSINESS_IMPACT,
+                ],
             )
 
             logging.info("Adding to Storage")
