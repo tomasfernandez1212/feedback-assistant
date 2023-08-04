@@ -22,7 +22,7 @@ class TestFeedbackItemChange(unittest.TestCase):
                 source_review_id="7hHyzoRRlXr2tQFDXGSbmg",
             )
             storage.add_node(review)
-            feedback_item = FeedbackItem(timestamp=123, id="feedback_item_id")
+            feedback_item = FeedbackItem(id="feedback_item_id")
             storage.add_feedback_item(feedback_item, constituted_by=review)
 
     def teardown_method(self, method: Callable[[], Any]):

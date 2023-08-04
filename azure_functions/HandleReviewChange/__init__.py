@@ -21,9 +21,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             )
 
         logging.info("Creating Feedback Item")
-        feedback_item = FeedbackItem(
-            timestamp=123,  # TODO: Get timestamp from review
-        )
+        feedback_item = FeedbackItem()
 
         logging.info("Adding Feedback Item to Graph")
         storage.add_feedback_item(feedback_item, constituted_by=review)

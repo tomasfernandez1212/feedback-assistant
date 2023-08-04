@@ -21,7 +21,7 @@ class TestHandleDataPointChange(unittest.TestCase):
                 source=ReviewSource.YELP,
                 source_review_id="Review_485u0",
             )
-            feedback_item = FeedbackItem(timestamp=345)
+            feedback_item = FeedbackItem()
             storage.add_feedback_item(feedback_item, review)
             data_point_1 = DataPoint(
                 interpretation="Great Atmosphere",
