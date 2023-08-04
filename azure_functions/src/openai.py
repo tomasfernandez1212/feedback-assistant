@@ -131,9 +131,13 @@ class OpenAIInterface:
         return list_of_data_points  # type: ignore
 
     def _generate_score_properties_and_required(
-        self,
-        score_types: List[ScoreType],
+        self, score_types: List[ScoreType]
     ) -> Tuple[Dict[str, Dict[str, Any]], List[str]]:
+        """
+        Generates the properties and required fields for the JSON schema for the OpenAI Functions API.
+
+        Specifically, it does this for the score types provided.
+        """
         properties: Dict[str, Dict[str, Any]] = {}
         required: List[str] = []
 
