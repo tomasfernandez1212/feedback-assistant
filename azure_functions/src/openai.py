@@ -3,6 +3,9 @@ import json
 from typing import List, Dict, Any, Tuple
 from enum import Enum
 from src.data.scores import Score
+from src.data.dataPoint import DataPoint
+from src.data.actionItems import ActionItem
+
 from pydantic import BaseModel
 
 
@@ -227,3 +230,135 @@ class OpenAIInterface:
 
         topic: str = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])["topic"]  # type: ignore
         return topic  # type: ignore
+
+    def get_new_action_items(
+        self,
+        feedback_item: str,
+        data_points: List[DataPoint],
+        existing_action_items: List[ActionItem],
+    ) -> List[ActionItem]:
+        """
+        Given a feedback item, a list of data points, and a list of existing action items, return a list of new action items to add.
+        """
+        numbered_data_points = ""
+        for i, data_point in enumerate(data_points):
+            numbered_data_points += f"{i}. {data_point.interpretation}\n"
+
+        numbered_existing_action_items = ""
+        for i, action_item_text in enumerate(existing_action_items):
+            numbered_existing_action_items += f"{i}. {action_item_text.text}\n"
+
+        response = openai.ChatCompletion.create(  # type: ignore
+            model="gpt-3.5-turbo-0613",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are an expert in customer service. Your task is to interpret customer's reviews, feedback, and conversations with us to infer action items for us to improve our customer's experience. ",
+                },
+                {
+                    "role": "user",
+                    "content": f"Here is a customer's feedback:\n\n{feedback_item}\n\nFrom this feedback, we have the following takeaways:\n\n{numbered_data_points}\n\nHere are the existing action items we have in our backlog:\n\n{numbered_existing_action_items}\n\nWhat action items to we need to add to our backlog to address the takeaways. Don't add action items if the ones in the backlog already address the issue.",
+                },
+            ],
+            functions=[
+                {
+                    "name": "report_action_items",
+                    "description": "This function is used to add more action items to the list. It accepts an array of action item objects.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "action_items": {
+                                "type": "array",
+                                "description": "A list of action items. For example: ['Evaluate the presentation of the gyro dish, particularly the white sweet potato gyro, to make it easier to eat. The customer found it hard to consume in its current form.', 'Maintain the quality of the fries, as they received high praise from the customer.']",
+                                "items": {"type": "string"},
+                            }
+                        },
+                        "required": ["action_items"],
+                    },
+                },
+            ],
+            function_call={"name": "report_action_items"},
+        )
+
+        new_action_items_text: List[str] = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])["action_items"]  # type: ignore
+
+        new_action_items: List[ActionItem] = []
+        for action_item_text in new_action_items_text:
+            action_item = ActionItem(text=action_item_text)
+            new_action_items.append(action_item)
+
+        return new_action_items  # type: ignore
+
+    def get_action_items_to_data_point_connections(
+        self,
+        feedback_item: str,
+        data_points: List[DataPoint],
+        action_items: List[ActionItem],
+    ) -> Dict[str, List[str]]:
+        """
+        Given a feedback item as context, a list of data points, and a list of action items, infer which action items address which data points.
+        """
+        numbered_data_points = ""
+        for i, data_point in enumerate(data_points):
+            numbered_data_points += f"{i}. {data_point.interpretation}\n"
+
+        numbered_action_items = ""
+        for i, action_item in enumerate(action_items):
+            numbered_action_items += f"{i}. {action_item.text}\n"
+
+        response = openai.ChatCompletion.create(  # type: ignore
+            model="gpt-3.5-turbo-0613",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are an expert in customer service. Your task is to interpret customer's reviews, feedback, and conversations with us to infer which action items will help us address takeaways taken from a customer's feedback. ",
+                },
+                {
+                    "role": "user",
+                    "content": f"Here is a customer's feedback:\n\n{feedback_item}\n\nFrom this feedback, we have the following takeaways:\n\n{numbered_data_points}\n\nHere are the action items we have in our backlog:\n\n{numbered_action_items}\n\nFor each action item, report which takeaway(s) the action item helps to address.",
+                },
+            ],
+            functions=[
+                {
+                    "name": "report_action_item_relationships",
+                    "description": "This function is used report which action items address which takeaway. It accepts an array of action item objects.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "relationships": {
+                                "type": "array",
+                                "description": "A list of relationships.",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "action_item_id": {
+                                            "type": "integer",
+                                            "description": "The id of the action item. For example: 0",
+                                        },
+                                        "data_point_ids": {
+                                            "type": "array",
+                                            "description": "A list of data point ids. For example: [0, 1]",
+                                            "items": {"type": "integer"},
+                                        },
+                                    },
+                                    "required": ["action_item_id", "data_point_ids"],
+                                },
+                            }
+                        },
+                        "required": ["relationships"],
+                    },
+                },
+            ],
+            function_call={"name": "report_action_item_relationships"},
+        )
+
+        relationships = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])["relationships"]  # type: ignore
+
+        # Convert the action item ids and data point ids to the actual objects
+        relationship_ids: Dict[str, List[str]] = {}
+        for relationship in relationships:
+            action_item_db_id = action_items[relationship["action_item_id"]].id  # type: ignore
+            data_points_db_ids = [data_points[data_point_id] for data_point_id in relationship["data_point_ids"]]  # type: ignore
+            relationship_ids[action_item_db_id] = data_points_db_ids  # type: ignore
+
+        return relationship_ids  # type: ignore

@@ -5,10 +5,11 @@ from src.data import Topic
 from src.data import AppState
 from src.data import DataPoint
 from src.data import Score
+from src.data import ActionItem
 
 from src.data import ListNodesType, NodeType, NodeTypeVar
 
-from typing import List, Type
+from typing import List, Type, Optional
 import logging
 
 from enum import Enum
@@ -140,6 +141,19 @@ class Storage:
                 if not self.check_if_edge_exists(feedback_item, topic, "informs"):
                     self.add_edges([feedback_item], [topic], "informs")
                     self.add_edges([topic], [feedback_item], "informed_by")
+
+    def add_action_item(self, action_item: ActionItem):
+        """
+        Adds action item as a node. Doesn't add any edges. This is done in a separate method.
+        """
+        self.add_node(action_item)
+
+    def add_edges_for_action_item(self, action_item: ActionItem, other: NodeType):
+        """
+        Adds edges between action item and other node.
+        """
+        self.add_edges([action_item], [other], "addresses")
+        self.add_edges([other], [action_item], "addressed_by")
 
     def clear_topics(self):
         topics = self.get_all_nodes_by_type(Topic)
