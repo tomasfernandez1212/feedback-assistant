@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from src.data.misc import RATING_MAPPING
 from src.data.reviews import Review, ReviewSource
 from src.data.feedbackItems import FeedbackItem
+from src.misc import iso_to_unix_timestamp
 
 
 class ApifyYelpReview(BaseModel):
@@ -67,12 +68,14 @@ class YelpReviewsInterface:
 
         for raw_review in raw_location.reviews:
             review = Review(
-                date=raw_review.date,
                 rating=RATING_MAPPING[raw_review.rating],
                 source=ReviewSource.YELP,
                 source_review_id=raw_review.id,
             )
-            feedback_item = FeedbackItem(text=raw_review.text)
+            feedback_item = FeedbackItem(
+                text=raw_review.text,
+                text_written_at=iso_to_unix_timestamp(raw_review.date),
+            )
             self.structured_reviews.append(review)
             self.structured_feedback_items.append(feedback_item)
 

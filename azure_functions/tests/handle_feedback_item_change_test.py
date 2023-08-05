@@ -8,6 +8,7 @@ from HandleFeedbackItemChange import main
 from src.storage import Storage
 from src.data.reviews import Review, Rating, ReviewSource
 from src.data.feedbackItems import FeedbackItem
+from src.misc import iso_to_unix_timestamp
 
 
 class TestFeedbackItemChange(unittest.TestCase):
@@ -16,7 +17,6 @@ class TestFeedbackItemChange(unittest.TestCase):
             # Add FeedbackItem with Edge
             review = Review(
                 rating=Rating.FOUR,
-                date="2020-01-01T00:00:00Z",
                 source=ReviewSource.YELP,
                 source_review_id="7hHyzoRRlXr2tQFDXGSbmg",
             )
@@ -24,6 +24,7 @@ class TestFeedbackItemChange(unittest.TestCase):
             feedback_item = FeedbackItem(
                 id="feedback_item_id",
                 text="It looks a bit hole-in-the-wall but has a lovely back patio with heaters. You order at the front and they give you a number, so it's a fast-casual vibe.",
+                text_written_at=iso_to_unix_timestamp("2023-07-25T00:00:00.000Z"),
             )
             storage.add_feedback_item(feedback_item, constituted_by=review)
 

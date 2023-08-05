@@ -8,6 +8,7 @@ from src.storage import Storage
 from src.data.dataPoint import DataPoint
 from src.data.feedbackItems import FeedbackItem
 from src.data.reviews import Review, Rating, ReviewSource
+from src.misc import iso_to_unix_timestamp
 import random
 
 
@@ -16,12 +17,12 @@ class TestHandleDataPointChange(unittest.TestCase):
         with Storage() as storage:
             review = Review(
                 rating=Rating.FOUR,
-                date="2020-01-01T00:00:00Z",
                 source=ReviewSource.YELP,
                 source_review_id="Review_485u0",
             )
             feedback_item = FeedbackItem(
-                text="This place had a great atmosphere and the pastries were delicious!"
+                text="This place had a great atmosphere and the pastries were delicious!",
+                text_written_at=iso_to_unix_timestamp("2023-07-25T00:00:00.000Z"),
             )
             storage.add_feedback_item(feedback_item, review)
             data_point_1 = DataPoint(
