@@ -24,7 +24,7 @@ class TestHandleDataPointChange(unittest.TestCase):
                 text="This place had a great atmosphere and the pastries were delicious!",
                 text_written_at=iso_to_unix_timestamp("2023-07-25T00:00:00.000Z"),
             )
-            storage.add_feedback_item(feedback_item, review)
+            storage.add_feedback_item_and_source(feedback_item, review)
             data_point_1 = DataPoint(
                 interpretation="Great Atmosphere",
                 embedding=f"{[random.random() for _ in range(1536)]}",

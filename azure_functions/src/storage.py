@@ -96,16 +96,16 @@ class Storage:
         else:
             raise Exception("Invalid Environment")
 
-    def add_feedback_item(self, feedback_item: FeedbackItem, constituted_by: Review):
+    def add_feedback_item_and_source(self, feedback_item: FeedbackItem, source: Review):
         """
-        Adds feedback item as a node, but also adds edge to node it is constituted by.
-        For now, constituted by can only be a review, but in the future it could be a messaging thread.
-
-        Constituted by should generally be provided, but might be optional for particular testing scenarios.
+        Adds feedback item as a node, but also adds edge to node it is source.
+        For now, source can only be a review, but in the future it could be a messaging thread.
         """
 
+        self.add_node(source)
         self.add_node(feedback_item)
-        self.add_edges([feedback_item], [constituted_by], "constituted_by")
+        self.add_edges([feedback_item], [source], "constituted_by")
+        self.add_edges([source], [feedback_item], "constitutes")
 
     def add_data_point_for_feedback_item(
         self, data_point: DataPoint, feedback_item: FeedbackItem

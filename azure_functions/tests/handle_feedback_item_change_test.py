@@ -20,13 +20,12 @@ class TestFeedbackItemChange(unittest.TestCase):
                 source=ReviewSource.YELP,
                 source_review_id="7hHyzoRRlXr2tQFDXGSbmg",
             )
-            storage.add_node(review)
             feedback_item = FeedbackItem(
                 id="feedback_item_id",
                 text="It looks a bit hole-in-the-wall but has a lovely back patio with heaters. You order at the front and they give you a number, so it's a fast-casual vibe.",
                 text_written_at=iso_to_unix_timestamp("2023-07-25T00:00:00.000Z"),
             )
-            storage.add_feedback_item(feedback_item, constituted_by=review)
+            storage.add_feedback_item_and_source(feedback_item, source=review)
 
     def teardown_method(self, method: Callable[[], Any]):
         pass

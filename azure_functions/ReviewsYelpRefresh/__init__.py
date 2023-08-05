@@ -29,8 +29,8 @@ def main(mytimer: func.TimerRequest) -> None:
 
     # Add Reviews to Graph
     with Storage() as storage:
-        storage.add_nodes(reviews)
-        for i, feedback_item in enumerate(feedback_items):
-            storage.add_feedback_item(feedback_item, reviews[i])
+        for i, review in enumerate(reviews):
+            feedback_item = feedback_items[i]
+            storage.add_feedback_item_and_source(feedback_item, review)
 
     logging.info("Done")
