@@ -4,11 +4,12 @@ load_dotenv()
 
 from apify_client import ApifyClient
 
-from typing import List
+from typing import List, Tuple
 from pydantic import BaseModel
 
 from src.data.misc import RATING_MAPPING
 from src.data.reviews import Review, ReviewSource
+from src.data.feedbackItems import FeedbackItem
 
 
 class ApifyYelpReview(BaseModel):
@@ -35,6 +36,7 @@ class YelpReviewsInterface:
         # Init Outputs
         self.raw_reviews_for_locations: List[ApifyYelpLocation] = []
         self.structured_reviews: List[Review] = []
+        self.structured_feedback_items: List[FeedbackItem] = []
 
     def _prepare_for_call(self, yelp_direct_url: str, review_limit: int) -> None:
         self.yelp_direct_urls = [yelp_direct_url]
@@ -67,14 +69,16 @@ class YelpReviewsInterface:
             review = Review(
                 date=raw_review.date,
                 rating=RATING_MAPPING[raw_review.rating],
-                text=raw_review.text,
                 source=ReviewSource.YELP,
                 source_review_id=raw_review.id,
             )
-
+            feedback_item = FeedbackItem(text=raw_review.text)
             self.structured_reviews.append(review)
+            self.structured_feedback_items.append(feedback_item)
 
-    def get(self, yelp_direct_url: str, review_limit: int) -> List[Review]:
+    def get(
+        self, yelp_direct_url: str, review_limit: int
+    ) -> Tuple[List[Review], List[FeedbackItem]]:
         """
         Run the scraper and return the structured results.
 
@@ -86,4 +90,4 @@ class YelpReviewsInterface:
         self._prepare_for_call(yelp_direct_url, review_limit)
         self._call_scraper()
         self._structure_results()
-        return self.structured_reviews
+        return (self.structured_reviews, self.structured_feedback_items)

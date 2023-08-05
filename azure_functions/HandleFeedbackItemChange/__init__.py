@@ -22,12 +22,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         logging.info(f"Getting FeedbackItem with ID: {id}")
         feedback_item = storage.get_node(id, FeedbackItem)
 
-        logging.info("Getting FeedbackItem's Source")
-        source = storage.get_feedback_item_source(feedback_item)
-
         logging.info("Getting Text For Data Points")
         openai_interface = OpenAIInterface()
-        data_points_text = openai_interface.get_data_points_text(source.text)
+        data_points_text = openai_interface.get_data_points_text(feedback_item.text)
         data_points: List[DataPoint] = []
 
         for data_point_text in data_points_text:
@@ -43,7 +40,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             logging.info("Scoring Data Point")
             scores = openai_interface.score_data_point(
                 data_point_text,
-                source.text,
+                feedback_item.text,
                 [
                     ScoreType.SATISFACTION,
                     ScoreType.SPECIFICITY,
@@ -64,7 +61,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         logging.info("Getting new action items for feedback item")
         existing_action_items: List[ActionItem] = []  # Get from vectorsearch
         new_action_items = openai_interface.get_new_action_items(
-            source.text, data_points, existing_action_items
+            feedback_item.text, data_points, existing_action_items
         )
         for new_action_item in new_action_items:
             storage.add_action_item(new_action_item)
@@ -73,7 +70,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         action_items = existing_action_items + new_action_items
         action_item_to_data_points = (
             openai_interface.infer_action_items_to_data_point_connections(
-                source.text, data_points, action_items
+                feedback_item.text, data_points, action_items
             )
         )
 

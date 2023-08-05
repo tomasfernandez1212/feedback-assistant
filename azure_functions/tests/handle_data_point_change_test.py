@@ -15,13 +15,14 @@ class TestHandleDataPointChange(unittest.TestCase):
     def setup_method(self, method: Callable[[], Any]):
         with Storage() as storage:
             review = Review(
-                text="This place had a great atmosphere and the pastries were delicious!",
                 rating=Rating.FOUR,
                 date="2020-01-01T00:00:00Z",
                 source=ReviewSource.YELP,
                 source_review_id="Review_485u0",
             )
-            feedback_item = FeedbackItem()
+            feedback_item = FeedbackItem(
+                text="This place had a great atmosphere and the pastries were delicious!"
+            )
             storage.add_feedback_item(feedback_item, review)
             data_point_1 = DataPoint(
                 interpretation="Great Atmosphere",

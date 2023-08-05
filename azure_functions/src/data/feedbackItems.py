@@ -5,6 +5,7 @@ import time
 
 
 class FeedbackItem(BaseModel):
+    text: str
     created_at: float = 0
     id: str = ""
 

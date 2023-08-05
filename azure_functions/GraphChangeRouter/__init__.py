@@ -33,7 +33,5 @@ def main(nodes: DocumentList):
 
         logging.info(f"Detected change to {id} of type {label} at {current_time}")
 
-        if label == "Review":
-            call_function("HandleReviewChange", json.loads(node.to_json()))  # type: ignore
         if label == "FeedbackItem":
             call_function("HandleFeedbackItemChange", json.loads(node.to_json()))  # type: ignore

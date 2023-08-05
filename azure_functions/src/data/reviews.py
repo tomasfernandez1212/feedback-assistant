@@ -14,7 +14,6 @@ class ReviewSource(Enum):
 class Review(BaseModel):
     date: str
     rating: Rating
-    text: str
     source: ReviewSource
     source_review_id: str
     id: str = ""

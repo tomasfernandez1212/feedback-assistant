@@ -22,13 +22,15 @@ def main(mytimer: func.TimerRequest) -> None:
 
     # Scrape Yelp
     yelp_reviews_interface = YelpReviewsInterface(apify_client)
-    structured_reviews = yelp_reviews_interface.get(
+    reviews, feedback_items = yelp_reviews_interface.get(
         yelp_direct_url="https://www.yelp.com/biz/souvla-san-francisco-3?osq=souvla",
         review_limit=2,
     )
 
     # Add Reviews to Graph
     with Storage() as storage:
-        storage.add_nodes(structured_reviews)
+        storage.add_nodes(reviews)
+        for i, feedback_item in enumerate(feedback_items):
+            storage.add_feedback_item(feedback_item, reviews[i])
 
     logging.info("Done")
