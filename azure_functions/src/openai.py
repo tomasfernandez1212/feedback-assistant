@@ -289,12 +289,12 @@ class OpenAIInterface:
 
         return new_action_items  # type: ignore
 
-    def get_action_items_to_data_point_connections(
+    def infer_action_items_to_data_point_connections(
         self,
         feedback_item: str,
         data_points: List[DataPoint],
         action_items: List[ActionItem],
-    ) -> Dict[str, List[str]]:
+    ) -> Dict[int, List[int]]:
         """
         Given a feedback item as context, a list of data points, and a list of action items, infer which action items address which data points.
         """
@@ -354,11 +354,11 @@ class OpenAIInterface:
 
         relationships = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])["relationships"]  # type: ignore
 
-        # Convert the action item ids and data point ids to the actual objects
-        relationship_ids: Dict[str, List[str]] = {}
+        # Convert to mapping of action item index to data point indices
+        action_item_to_data_points: Dict[int, List[int]] = {}
         for relationship in relationships:
-            action_item_db_id = action_items[relationship["action_item_id"]].id  # type: ignore
-            data_points_db_ids = [data_points[data_point_id] for data_point_id in relationship["data_point_ids"]]  # type: ignore
-            relationship_ids[action_item_db_id] = data_points_db_ids  # type: ignore
+            action_item_to_data_points[relationship["action_item_id"]] = relationship[
+                "data_point_ids"
+            ]
 
-        return relationship_ids  # type: ignore
+        return action_item_to_data_points  # type: ignore

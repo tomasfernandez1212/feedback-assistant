@@ -9,7 +9,7 @@ from src.data import ActionItem
 
 from src.data import ListNodesType, NodeType, NodeTypeVar
 
-from typing import List, Type, Optional
+from typing import List, Type
 import logging
 
 from enum import Enum
@@ -148,12 +148,12 @@ class Storage:
         """
         self.add_node(action_item)
 
-    def add_edges_for_action_item(self, action_item: ActionItem, other: NodeType):
+    def add_edges_for_action_item(self, action_item: ActionItem, others: ListNodesType):
         """
-        Adds edges between action item and other node.
+        Adds edges between action item and other nodes.
         """
-        self.add_edges([action_item], [other], "addresses")
-        self.add_edges([other], [action_item], "addressed_by")
+        self.add_edges([action_item], others, "addresses")
+        self.add_edges(others, [action_item], "addressed_by")
 
     def clear_topics(self):
         topics = self.get_all_nodes_by_type(Topic)
