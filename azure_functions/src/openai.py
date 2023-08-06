@@ -1,5 +1,7 @@
 import openai
 import json
+import re
+import logging
 from typing import List, Dict, Any, Tuple
 from enum import Enum
 from src.data.scores import Score
@@ -96,7 +98,7 @@ class OpenAIInterface:
             function_call={"name": "report_interpretation"},
         )
 
-        list_of_data_points: List[str] = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])["data_points"]  # type: ignore
+        list_of_data_points: List[str] = self.unpack_function_call_arguments(response)["data_points"]  # type: ignore
         return list_of_data_points  # type: ignore
 
     def _generate_score_properties_and_required(
@@ -169,7 +171,7 @@ class OpenAIInterface:
             function_call=function_call,
         )
 
-        result = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])  # type: ignore
+        result = self.unpack_function_call_arguments(response)  # type: ignore
 
         scores: List[Score] = []
         for score_type in score_types:
@@ -228,7 +230,7 @@ class OpenAIInterface:
             function_call={"name": "report_topic"},
         )
 
-        topic: str = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])["topic"]  # type: ignore
+        topic: str = self.unpack_function_call_arguments(response)["topic"]  # type: ignore
         return topic  # type: ignore
 
     def get_new_action_items(
@@ -280,7 +282,7 @@ class OpenAIInterface:
             function_call={"name": "report_action_items"},
         )
 
-        new_action_items_text: List[str] = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])["action_items"]  # type: ignore
+        new_action_items_text: List[str] = self.unpack_function_call_arguments(response)["action_items"]  # type: ignore
 
         new_action_items: List[ActionItem] = []
         for action_item_text in new_action_items_text:
@@ -298,6 +300,14 @@ class OpenAIInterface:
         """
         Given a feedback item as context, a list of data points, and a list of action items, infer which action items address which data points.
         """
+
+        # Exit if there are no data points or action items
+        if len(data_points) == 0:
+            return {}
+        if len(action_items) == 0:
+            return {}
+
+        # Create a numbered list of data points and action items
         numbered_data_points = ""
         for i, data_point in enumerate(data_points):
             numbered_data_points += f"{i}. {data_point.interpretation}\n"
@@ -352,7 +362,7 @@ class OpenAIInterface:
             function_call={"name": "report_action_item_relationships"},
         )
 
-        relationships = json.loads(response["choices"][0]["message"]["function_call"]["arguments"])["relationships"]  # type: ignore
+        relationships = self.unpack_function_call_arguments(response)["relationships"]  # type: ignore
 
         # Convert to mapping of action item index to data point indices
         action_item_to_data_points: Dict[int, List[int]] = {}
@@ -362,3 +372,35 @@ class OpenAIInterface:
             ]
 
         return action_item_to_data_points  # type: ignore
+
+    def is_trailing_comma_error(self, json_str: str, exception: Exception) -> bool:
+        # Check if error is because of trailing comma
+        if "Expecting property name enclosed in double quotes" in str(exception):
+            last_open_brace = json_str.rfind("{")
+            last_close_brace = json_str.rfind("}")
+
+            if last_open_brace < last_close_brace:
+                snippet = json_str[last_open_brace : last_close_brace + 1]
+                if snippet.rstrip().endswith(",\n}"):
+                    return True
+        return False
+
+    def fix_trailing_commas(self, json_str: str) -> str:
+        # Remove trailing commas before a closing brace or bracket
+        corrected_str = re.sub(r",\s*([}\]])", r"\1", json_str)
+        return corrected_str
+
+    def unpack_function_call_arguments(self, response: Any) -> Dict[str, Any]:
+        arguments_str = response["choices"][0]["message"]["function_call"]["arguments"]
+        try:
+            arguments = json.loads(arguments_str)
+        except json.decoder.JSONDecodeError as e:
+            if self.is_trailing_comma_error(arguments_str, e):
+                arguments_str = self.fix_trailing_commas(arguments_str)
+                arguments = json.loads(arguments_str)
+            else:
+                logging.error(
+                    f"Error unpacking function call arguments: {arguments_str}"
+                )
+                raise e
+        return arguments
