@@ -211,3 +211,7 @@ class GraphConnection:
         query = f"g.V('{from_node.id}').outE('{edge_label}').where(inV().hasId('{to_node.id}'))"
         result_set = self.gremlin_client.submit(query)  # type: ignore
         return len(result_set.all().result()) > 0  # type: ignore
+
+    def submit_query(self, query: str) -> Any:
+        result_set = self.gremlin_client.submit(query)  # type: ignore
+        return result_set.all().result()  # type: ignore

@@ -4,7 +4,7 @@ import re
 import logging
 from typing import List, Dict, Any, Tuple
 from enum import Enum
-from src.data.scores import Score
+from src.data.scores import Score, ScoreNames
 from src.data.dataPoint import DataPoint
 from src.data.actionItems import ActionItem
 
@@ -12,7 +12,7 @@ from pydantic import BaseModel
 
 
 class ScoreConfig(BaseModel):
-    name: str
+    name: ScoreNames
     range_min: int
     range_middle: int
     range_max: int
@@ -23,13 +23,13 @@ class ScoreConfig(BaseModel):
 
     def model_post_init(self, __context: Any) -> None:
         if self.var_name == "":
-            self.var_name: str = self.name.lower().replace(" ", "_")
+            self.var_name: str = self.name.value.lower().replace(" ", "_")
         return super().model_post_init(__context)
 
 
 class ScoreType(Enum):
     SATISFACTION = ScoreConfig(
-        name="Satisfaction",
+        name=ScoreNames.SATISFACTION,
         range_min=0,
         range_middle=50,
         range_max=100,
@@ -38,7 +38,7 @@ class ScoreType(Enum):
         range_max_description="very positive",
     )
     SPECIFICITY = ScoreConfig(
-        name="Specificity",
+        name=ScoreNames.SPECIFICITY,
         range_min=0,
         range_middle=50,
         range_max=100,
@@ -47,7 +47,7 @@ class ScoreType(Enum):
         range_max_description="very specific (highly constructive feedback)",
     )
     BUSINESS_IMPACT = ScoreConfig(
-        name="Business Impact",
+        name=ScoreNames.BUSINESS_IMPACT,
         range_min=0,
         range_middle=50,
         range_max=100,

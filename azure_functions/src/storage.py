@@ -4,15 +4,20 @@ from src.data import Review
 from src.data import Topic
 from src.data import AppState
 from src.data import DataPoint
-from src.data import Score
+from src.data.scores import Score, ScoreNames
 from src.data import ActionItem
 
 from src.data import ListNodesType, NodeType, NodeTypeVar
 
-from typing import List, Type
+from typing import List, Type, Union, Dict, Any
 import logging
 
 from enum import Enum
+
+
+class AggregationMethod(Enum):
+    MEAN = "mean"
+    COUNT = "count"
 
 
 class Environment(Enum):
@@ -211,3 +216,19 @@ class Storage:
 
         # Update the app state in the graph
         self.update_node(new_app_state)
+
+    def aggregate_scores_for_node(
+        self,
+        for_node: Union[FeedbackItem, Topic, ActionItem],
+        score_name: ScoreNames,
+        aggregation: AggregationMethod,
+    ) -> List[Dict[str, Any]]:
+        # Form query
+        query = f"g.V().hasLabel({for_node.__class__.__name__}).as('x').out('addresses').hasLabel('DataPoint').out('scored_by').has('name', '{score_name.value}').values('score').group().by(select('x')).by({aggregation.value}()).unfold()"
+
+        # Submit query
+        result: List[Dict[str, float]] = self._get_graph(type(for_node)).submit_query(
+            query
+        )
+
+        return result
