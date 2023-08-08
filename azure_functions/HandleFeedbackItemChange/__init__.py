@@ -60,18 +60,4 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         for new_action_item in new_action_items:
             storage.add_action_item(new_action_item)
 
-        logging.info("Inferring which action items and data points to connect")
-        action_items = existing_action_items + new_action_items
-        action_item_to_data_points = (
-            openai_interface.infer_action_items_to_data_point_connections(
-                feedback_item.text, data_points, action_items
-            )
-        )
-
-        logging.info("Adding inferred connections to storage")
-        for action_item_idx, data_point_indices in action_item_to_data_points.items():
-            action_item = action_items[action_item_idx]
-            data_points_to_connect = [data_points[i] for i in data_point_indices]
-            storage.add_edges_for_action_item(action_item, data_points_to_connect)
-
         return func.HttpResponse(f"Hanlded FeedbackItem Change.", status_code=200)
