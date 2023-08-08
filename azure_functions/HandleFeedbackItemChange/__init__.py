@@ -1,5 +1,4 @@
 import logging
-import time
 
 import azure.functions as func
 
@@ -52,11 +51,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             storage.add_data_point_for_feedback_item(data_point, feedback_item)
             for score in scores:
                 storage.add_score(data_point, score)
-
-        logging.info("Updating the time at which data points were last modified")
-        app_state = storage.get_app_state()
-        app_state.data_points_last_modified = time.time()
-        storage.update_app_state(app_state)
 
         logging.info("Getting new action items for feedback item")
         existing_action_items: List[ActionItem] = []  # Get from vectorsearch
