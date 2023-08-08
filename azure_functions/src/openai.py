@@ -7,6 +7,7 @@ from enum import Enum
 from src.data.scores import Score, ScoreNames
 from src.data.dataPoint import DataPoint
 from src.data.actionItems import ActionItem
+from src.data.topics import Topic
 
 from pydantic import BaseModel
 
@@ -189,50 +190,6 @@ class OpenAIInterface:
         embeddings = response["data"][0]["embedding"]  # type: ignore
         return embeddings  # type: ignore
 
-    def get_topic_from_data_points(
-        self, data_points: List[str], limit_points: int = 15
-    ) -> str:
-        response = openai.ChatCompletion.create(  # type: ignore
-            model="gpt-3.5-turbo-0613",
-            messages=[
-                {
-                    "role": "system",
-                    "content": """
-                    You are an expert in customer service. Your task is to identify the a common topic among a list of data points from customer's reviews, feedback, and in conversations with us. 
-                 
-                    For example, given these data points ["Good Food", "Black Bean Vegan 'Lamb'", "Chicken Salad", "Delicious Mandarin Oranges", "Delicious Greek Fries"]
-                 
-                    You would identify a single topic that encapsulates the theme of these data points: "Delicious Food"
-                 
-                    The goal is to summarize these data point.""",
-                },
-                {
-                    "role": "user",
-                    "content": f"What is the overarching topic from these data points: {data_points[:limit_points]}",
-                },
-            ],
-            functions=[
-                {
-                    "name": "report_topic",
-                    "description": "Used to report a topic to the system.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "topic": {
-                                "type": "string",
-                                "description": "A topic.",
-                            },
-                        },
-                    },
-                    "required": ["topic"],
-                }
-            ],
-            function_call={"name": "report_topic"},
-        )
-
-        topic: str = self.unpack_function_call_arguments(response)["topic"]  # type: ignore
-        return topic  # type: ignore
-
     def get_new_action_items(
         self,
         feedback_item: str,
@@ -290,6 +247,64 @@ class OpenAIInterface:
             new_action_items.append(action_item)
 
         return new_action_items  # type: ignore
+
+    def get_new_topics(
+        self,
+        feedback_item: str,
+        data_points: List[DataPoint],
+        existing_topics: List[Topic],
+    ) -> List[Topic]:
+        """
+        Given a feedback item, a list of data points, and a list of existing topics, return a list of new topics to add.
+        """
+        numbered_data_points = ""
+        for i, data_point in enumerate(data_points):
+            numbered_data_points += f"{i}. {data_point.interpretation}\n"
+
+        numbered_existing_topics = ""
+        for i, topic_text in enumerate(existing_topics):
+            numbered_existing_topics += f"{i}. {topic_text.name}\n"
+
+        response = openai.ChatCompletion.create(  # type: ignore
+            model="gpt-3.5-turbo-0613",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are an expert in customer service. Your task is to interpret customer's reviews, feedback, and conversations with us to infer topics that are being discussed. ",
+                },
+                {
+                    "role": "user",
+                    "content": f"Here is a customer's feedback:\n\n{feedback_item}\n\nFrom this feedback, we have the following takeaways:\n\n{numbered_data_points}\n\nHere are the existing topics identified from other feedback items:\n\n{numbered_existing_topics}\n\nWhat topics do we need to add? Don't add topics if the existing topics already reasonably cover the feedback and its takeaways. When you do decide to add a topic, make sure the topic is neutral. For example, 'The service was super quick!!' is about the 'Speed of Service'",
+                },
+            ],
+            functions=[
+                {
+                    "name": "report_topics",
+                    "description": "This function is used to add more topics to the list. It accepts an array of topics as strings.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "topics": {
+                                "type": "array",
+                                "description": "A list of topics. For example: ['Checkout process.', 'Payment options.', 'Outdoor Patio.']",
+                                "items": {"type": "string"},
+                            }
+                        },
+                        "required": ["topics"],
+                    },
+                },
+            ],
+            function_call={"name": "report_topics"},
+        )
+
+        new_topics_text: List[str] = self.unpack_function_call_arguments(response)["topics"]  # type: ignore
+
+        new_topics: List[Topic] = []
+        for topic_text in new_topics_text:
+            topic = Topic(name=topic_text)
+            new_topics.append(topic)
+
+        return new_topics  # type: ignore
 
     def infer_action_items_to_data_point_connections(
         self,

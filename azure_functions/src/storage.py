@@ -131,27 +131,17 @@ class Storage:
         self.add_edges([score], [node], "scores_for")
         self.add_edges([node], [score], "scored_by")
 
-    def add_topic_based_on_data_points(
-        self, topic: Topic, data_points: List[DataPoint]
-    ):
-        """
-        Adds topic as a node, but also adds edges between topic and data points and between feedback items and topic.
-        """
-        self.add_node(topic)
-        self.add_edges(data_points, [topic], "belongs_to")
-        self.add_edges([topic], data_points, "contains")
-        for data_point in data_points:
-            feedback_items = self.traverse(data_point, "derived_from")
-            for feedback_item in feedback_items:
-                if not self.check_if_edge_exists(feedback_item, topic, "informs"):
-                    self.add_edges([feedback_item], [topic], "informs")
-                    self.add_edges([topic], [feedback_item], "informed_by")
-
     def add_action_item(self, action_item: ActionItem):
         """
         Adds action item as a node. Doesn't add any edges. This is done in a separate method.
         """
         self.add_node(action_item)
+
+    def add_topic(self, topic: Topic):
+        """
+        Adds topic as a node. Doesn't add any edges. This is done in a separate method.
+        """
+        self.add_node(topic)
 
     def add_edges_for_action_item(self, action_item: ActionItem, others: ListNodesType):
         """
@@ -159,11 +149,6 @@ class Storage:
         """
         self.add_edges([action_item], others, "addresses")
         self.add_edges(others, [action_item], "addressed_by")
-
-    def clear_topics(self):
-        topics = self.get_all_nodes_by_type(Topic)
-        for topic in topics:
-            self._get_graph(Topic).delete_node(topic.id)
 
     def get_feedback_item_source(self, feedback_item: FeedbackItem) -> Review:
         result = self.traverse(feedback_item, "constituted_by")
