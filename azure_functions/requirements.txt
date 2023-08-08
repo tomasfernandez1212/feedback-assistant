@@ -13,3 +13,4 @@ pytest
 hdbscan
 ipykernel 
 numpy
+azure-search-documents
