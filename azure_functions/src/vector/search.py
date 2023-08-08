@@ -30,11 +30,20 @@ class VectorSearch:
         self, index_name: IndexNames, vector: List[float]
     ) -> SearchItemPaged[Dict[Any, Any]]:
         client = self.get_client(index_name)
-        result = client.search(
+        result = client.search(  # type: ignore
             search_text="",
             vector=vector,
             topk=3,
-            vector_fields="contetVector",
+            vector_fields="contentVector",
             select=["id"],
         )
-        return result
+        return result  # type: ignore
+
+    def add_documents(
+        self, index_name: IndexNames, documents: List[Dict[Any, Any]]
+    ) -> None:
+        """
+        Upload multiple documents to the index
+        """
+        client = self.get_client(index_name)
+        client.upload_documents(documents=documents)  # type: ignore
