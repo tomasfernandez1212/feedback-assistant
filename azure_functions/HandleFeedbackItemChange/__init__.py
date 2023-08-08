@@ -27,13 +27,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         data_points: List[DataPoint] = []
 
         for data_point_text in data_points_text:
-            logging.info("Getting Embedding")
-            embedding = openai_interface.get_embedding(data_point_text)
-
             logging.info("Creating Data Point")
-            data_point = DataPoint(
-                interpretation=data_point_text, embedding=str(embedding)
-            )
+            data_point = DataPoint(interpretation=data_point_text)
             data_points.append(data_point)
 
             logging.info("Scoring Data Point")

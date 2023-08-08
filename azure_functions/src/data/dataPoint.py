@@ -6,7 +6,6 @@ import time
 
 class DataPoint(BaseModel):
     interpretation: str
-    embedding: str  # Str for easier storage in Graph. Property can't be list of floats.
     id: str = ""
     created_at: float = 0
 
