@@ -1,4 +1,5 @@
 from src.graph.connect import GraphConnection
+from src.vector.search import VectorStore, IndexNames
 from src.data import FeedbackItem
 from src.data import Review
 from src.data import Topic
@@ -28,9 +29,9 @@ class Environment(Enum):
 class Storage:
     """
     This class is used to the interface with the app's stored data.
-    Whether from the eventual consistency graph, strong consistency graph, or other data stores.
+    Whether from the eventual consistency graph, strong consistency graph, or other data stores such as vectorstores.
 
-    This class should be initialized with a "with" statement, so that the connections to the graph are closed properly.
+    This class should be initialized with a "with" statement, so that the connections are closed properly.
     """
 
     def __init__(self):
@@ -39,11 +40,14 @@ class Storage:
     def __enter__(self):
         self.eventual_graph = GraphConnection()
         self.strong_graph = GraphConnection(strong_consistency=True)
+        self.vectorstore = VectorStore()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):  # type: ignore
         self.eventual_graph.close()
         self.strong_graph.close()
+        for vector_client in self.vectorstore.search_clients.values():
+            vector_client.close()
 
     def _get_graph(self, node_type: type) -> GraphConnection:
         if node_type == AppState:
@@ -95,9 +99,11 @@ class Storage:
         if environment == Environment.TEST:
             self.eventual_graph.reset_graph("feedback-assistant-test")
             self.strong_graph.reset_graph("feedback-assistant-strong-consistency-test")
+            self.vectorstore.reset("feedback-assistant-test")
         elif environment == Environment.PROD:
             self.eventual_graph.reset_graph("feedback-assistant")
             self.strong_graph.reset_graph("feedback-assistant-strong-consistency")
+            self.vectorstore.reset("feedback-assistant")
         else:
             raise Exception("Invalid Environment")
 
@@ -113,10 +119,12 @@ class Storage:
         self.add_edges([source], [feedback_item], "constitutes")
 
     def add_data_point_for_feedback_item(
-        self, data_point: DataPoint, feedback_item: FeedbackItem
+        self, data_point: DataPoint, feedback_item: FeedbackItem, embed: bool = True
     ):
         """
         Adds data point as node, but also adds edges between feedback item and data point.
+
+        Optionally, embeds data point and adds to vector store.
         """
 
         self.add_node(data_point)
@@ -217,3 +225,21 @@ class Storage:
         )
 
         return result
+
+    def add_embedding(
+        self, node_id: str, node_type: Type[NodeTypeVar], embedding: List[float]
+    ):
+        """
+        Stores the embedding of a node in the vectorstore.
+        """
+
+        try:
+            index_name = IndexNames[node_type.__name__]
+        except KeyError:
+            raise Exception(
+                f"Node type {node_type.__name__} does not have an index name defined."
+            )
+        self.vectorstore.add_documents(
+            index_name=index_name,
+            documents=[{"id": node_id, "contentVector": embedding}],
+        )

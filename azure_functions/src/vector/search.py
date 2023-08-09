@@ -3,6 +3,15 @@ from enum import Enum
 from typing import List, Any, Dict
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents import SearchClient, SearchItemPaged
+from azure.search.documents.indexes import SearchIndexClient
+from azure.search.documents.indexes.models import (
+    SearchIndex,
+    SimpleField,
+    SearchField,
+    SearchFieldDataType,
+    VectorSearch,
+    HnswVectorSearchAlgorithmConfiguration,
+)
 
 
 class IndexNames(Enum):
@@ -11,20 +20,64 @@ class IndexNames(Enum):
     Topic = "topics"
 
 
-class VectorSearch:
+class VectorStore:
     def __init__(self) -> None:
         credential = AzureKeyCredential(os.environ["COG_API_KEY"])
+        self.search_clients: Dict[IndexNames, SearchClient] = {}
+        self.store_name = os.environ["COG_SEARCH_NAME"]
+        self.store_endpoint = f"https://{self.store_name}.search.windows.net/"
+
+        self.search_index_client = SearchIndexClient(
+            endpoint=self.store_endpoint,
+            credential=credential,
+        )
 
         for index_name in IndexNames:
-            client = SearchClient(
-                endpoint=os.environ["COG_SEARCH_ENDPOINT"],
+            search_client = SearchClient(
+                endpoint=self.store_endpoint,
                 index_name=index_name.value,
                 credential=credential,
             )
-            setattr(self, f"client_{index_name.value.replace('-', '_')}", client)
+            self.search_clients[index_name] = search_client
+
+    def initialize_index(self, index_name: IndexNames) -> None:
+        """
+        Create the index with the given name.
+        """
+        self.search_index_client.create_index(
+            SearchIndex(
+                name=index_name.value,
+                fields=[
+                    SimpleField(name="id", type=SearchFieldDataType.String, key=True),
+                    SearchField(
+                        name="contentVector",
+                        type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
+                        searchable=True,
+                        vector_search_dimensions=1536,
+                        vector_search_configuration="my-vector-config",
+                    ),
+                ],
+                vector_search=VectorSearch(
+                    algorithm_configurations=[
+                        HnswVectorSearchAlgorithmConfiguration(name="my-vector-config")
+                    ]
+                ),
+            )
+        )
+
+    def reset(self, confirm_store_name: str) -> None:
+        """
+        Delete all documents in the indexes by deleting and recreating the indexes.
+        """
+        if confirm_store_name != self.store_name:
+            raise Exception("Vectorstore name does not match")
+
+        for index_name in IndexNames:
+            self.search_index_client.delete_index(index_name.value)
+            self.initialize_index(index_name)
 
     def get_client(self, index_name: IndexNames) -> SearchClient:
-        return getattr(self, f"client_{index_name.value.replace('-', '_')}")
+        return self.search_clients[index_name]
 
     def search_with_vector(
         self, index_name: IndexNames, vector: List[float]
@@ -46,4 +99,4 @@ class VectorSearch:
         Upload multiple documents to the index
         """
         client = self.get_client(index_name)
-        client.upload_documents(documents=documents)  # type: ignore
+        result = client.upload_documents(documents=documents)  # type: ignore
