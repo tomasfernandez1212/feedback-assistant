@@ -1,5 +1,5 @@
 from src.graph.connect import GraphConnection
-from src.vector.search import VectorStore, IndexNames
+from src.vector.search import VectorStore, Namespace
 from src.data import FeedbackItem
 from src.data import Review
 from src.data import Topic
@@ -234,7 +234,7 @@ class Storage:
         """
 
         try:
-            index_name = IndexNames[node_type.__name__]
+            index_name = Namespace[node_type.__name__]
         except KeyError:
             raise Exception(
                 f"Node type {node_type.__name__} does not have an index name defined."
@@ -252,7 +252,7 @@ class Storage:
         """
 
         try:
-            index_name = IndexNames[node_type.__name__]
+            index_name = Namespace[node_type.__name__]
         except KeyError:
             raise Exception(
                 f"Node type {node_type.__name__} does not have an index name defined."
