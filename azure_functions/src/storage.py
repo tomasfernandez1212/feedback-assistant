@@ -243,3 +243,18 @@ class Storage:
             index_name=index_name,
             documents=[{"id": node_id, "contentVector": embedding}],
         )
+
+    def search_with_embedding(
+        self, node_type: Type[NodeTypeVar], embedding: List[float]
+    ):
+        """
+        Searches the vectorstore for the nearest neighbors to the given embedding.
+        """
+
+        try:
+            index_name = IndexNames[node_type.__name__]
+        except KeyError:
+            raise Exception(
+                f"Node type {node_type.__name__} does not have an index name defined."
+            )
+        return self.vectorstore.search_with_vector(index_name, embedding, 10)

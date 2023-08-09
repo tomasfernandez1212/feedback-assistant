@@ -8,10 +8,12 @@ from azure.search.documents.indexes.models import (
     SearchIndex,
     SimpleField,
     SearchField,
+    SearchableField,
     SearchFieldDataType,
     VectorSearch,
     HnswVectorSearchAlgorithmConfiguration,
 )
+from azure.search.documents.models import Vector
 
 
 class IndexNames(Enum):
@@ -49,7 +51,7 @@ class VectorStore:
                 name=index_name.value,
                 fields=[
                     SimpleField(name="id", type=SearchFieldDataType.String, key=True),
-                    SearchField(
+                    SearchableField(
                         name="contentVector",
                         type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
                         searchable=True,
@@ -80,14 +82,12 @@ class VectorStore:
         return self.search_clients[index_name]
 
     def search_with_vector(
-        self, index_name: IndexNames, vector: List[float]
+        self, index_name: IndexNames, vector: List[float], topk: int = 3
     ) -> SearchItemPaged[Dict[Any, Any]]:
         client = self.get_client(index_name)
         result = client.search(  # type: ignore
             search_text="",
-            vector=vector,
-            topk=3,
-            vector_fields="contentVector",
+            vectors=[Vector(value=vector, k=topk, fields="contentVector")],
             select=["id"],
         )
         return result  # type: ignore
