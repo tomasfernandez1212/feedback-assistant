@@ -5,7 +5,7 @@ import time
 
 
 class DataPoint(BaseModel):
-    interpretation: str
+    text: str
     id: str = ""
     created_at: float = 0
 

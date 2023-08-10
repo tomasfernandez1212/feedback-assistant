@@ -3,6 +3,7 @@ import logging
 import azure.functions as func
 from src.storage import Storage
 from src.data.dataPoint import DataPoint
+from src.data.topics import Topic
 from src.openai import OpenAIInterface
 
 
@@ -17,8 +18,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         logging.info("Get related topics")
         openai_interface = OpenAIInterface()
-        data_point_embedding = openai_interface.get_embedding(data_point.interpretation)
-        existing_topics = storage.search_with_embedding(DataPoint, data_point_embedding)
+        data_point_embedding = openai_interface.get_embedding(data_point.text)
+        existing_topics = storage.search_with_embedding(Topic, data_point_embedding, 10)
         for existing_topic in existing_topics:
             print(existing_topic)
 

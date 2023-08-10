@@ -11,6 +11,8 @@ from src.data.actionItems import ActionItem
 # Create a Type for Any Graph Node
 NodeType = Union[Review, FeedbackItem, DataPoint, ActionItem, Score, Topic, AppState]
 
+EmbeddableNodeType = Union[FeedbackItem, DataPoint, ActionItem, Topic]
+
 # Create a Type for a List of Graph Nodes
 ListNodesType = Sequence[NodeType]
 

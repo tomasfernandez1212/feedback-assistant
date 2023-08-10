@@ -26,15 +26,15 @@ class TestHandleDataPointChange(unittest.TestCase):
                 text_written_at=iso_to_unix_timestamp("2023-07-25T00:00:00.000Z"),
             )
             data_point_1 = DataPoint(
-                interpretation="The menu at Souvla is simple and all the dishes are highly recommended.",
+                text="The menu at Souvla is simple and all the dishes are highly recommended.",
                 id="DataPoint_4048u",
             )
             data_point_2 = DataPoint(
-                interpretation="The customer finds the chicken salad fresh and satisfying.",
+                text="The customer finds the chicken salad fresh and satisfying.",
                 id="DataPoint_fh5894",
             )
             topic_1 = Topic(
-                name="Chicken Salad",
+                text="Chicken Salad",
             )
             action_item_1 = ActionItem(
                 text="Consider making the size of the chicken salad bigger.",

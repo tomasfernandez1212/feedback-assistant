@@ -29,7 +29,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         for data_point_text in data_points_text:
             logging.info("DATAPOINTS: Creating Data Point")
-            data_point = DataPoint(interpretation=data_point_text)
+            data_point = DataPoint(text=data_point_text)
             data_points.append(data_point)
 
             logging.info("DATAPOINTS: Scoring Data Point")
@@ -48,12 +48,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             for score in scores:
                 storage.add_score(data_point, score)
 
-            logging.info("DATAPOINTS: Embedding Data Point and Adding to Storage")
-            data_point_embedding = openai_interface.get_embedding(
-                data_point.interpretation
-            )
-            storage.add_embedding(data_point.id, DataPoint, data_point_embedding)
-
         logging.info(
             "ACTIONITEMS: Getting new action items for feedback item, embedding, and adding to storage"
         )
@@ -63,8 +57,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
         for new_action_item in new_action_items:
             storage.add_action_item(new_action_item)
-            action_item_embedding = openai_interface.get_embedding(new_action_item.text)
-            storage.add_embedding(new_action_item.id, ActionItem, action_item_embedding)
 
         logging.info("TOPICS: Getting new topics for feedback item")
         existing_topics: List[Topic] = []  # Get from vectorsearch
@@ -73,7 +65,5 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
         for new_topic in new_topics:
             storage.add_topic(new_topic)
-            topic_embedding = openai_interface.get_embedding(new_topic.name)
-            storage.add_embedding(new_topic.id, Topic, topic_embedding)
 
         return func.HttpResponse(f"Hanlded FeedbackItem Change.", status_code=200)

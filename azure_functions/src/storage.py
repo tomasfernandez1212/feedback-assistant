@@ -1,12 +1,14 @@
 from src.graph.connect import GraphConnection
-from src.vector.search import VectorStore, Namespace
-from src.data import FeedbackItem
+from src.vector.search import VectorStore, VectorDataType, VectorEnv, Vector
+from src.data import FeedbackItem, EmbeddableNodeType
 from src.data import Review
 from src.data import Topic
 from src.data import AppState
 from src.data import DataPoint
 from src.data.scores import Score, ScoreNames
 from src.data import ActionItem
+
+from src.openai import OpenAIInterface
 
 from src.data import ListNodesType, NodeType, NodeTypeVar
 
@@ -35,7 +37,7 @@ class Storage:
     """
 
     def __init__(self):
-        pass
+        self.openai_interface = OpenAIInterface()
 
     def __enter__(self):
         self.eventual_graph = GraphConnection()
@@ -46,8 +48,7 @@ class Storage:
     def __exit__(self, exc_type, exc_value, traceback):  # type: ignore
         self.eventual_graph.close()
         self.strong_graph.close()
-        for vector_client in self.vectorstore.search_clients.values():
-            vector_client.close()
+        self.vectorstore.close()
 
     def _get_graph(self, node_type: type) -> GraphConnection:
         if node_type == AppState:
@@ -99,11 +100,11 @@ class Storage:
         if environment == Environment.TEST:
             self.eventual_graph.reset_graph("feedback-assistant-test")
             self.strong_graph.reset_graph("feedback-assistant-strong-consistency-test")
-            self.vectorstore.reset("feedback-assistant-test")
+            self.vectorstore.reset_env(VectorEnv.TEST)
         elif environment == Environment.PROD:
             self.eventual_graph.reset_graph("feedback-assistant")
             self.strong_graph.reset_graph("feedback-assistant-strong-consistency")
-            self.vectorstore.reset("feedback-assistant")
+            self.vectorstore.reset_env(VectorEnv.PROD)
         else:
             raise Exception("Invalid Environment")
 
@@ -119,17 +120,18 @@ class Storage:
         self.add_edges([source], [feedback_item], "constitutes")
 
     def add_data_point_for_feedback_item(
-        self, data_point: DataPoint, feedback_item: FeedbackItem, embed: bool = True
+        self, data_point: DataPoint, feedback_item: FeedbackItem
     ):
         """
-        Adds data point as node, but also adds edges between feedback item and data point.
+        Adds data point as node in graph, but also adds edges between feedback item and data point.
 
-        Optionally, embeds data point and adds to vector store.
+        Also embeds the data point and adds to vectorstore.
         """
 
         self.add_node(data_point)
         self.add_edges([feedback_item], [data_point], "derived")
         self.add_edges([data_point], [feedback_item], "derived_from")  # reverse edge
+        self.embed_and_store(data_point)
 
     def add_score(self, node: NodeType, score: Score):
         """
@@ -144,12 +146,14 @@ class Storage:
         Adds action item as a node. Doesn't add any edges. This is done in a separate method.
         """
         self.add_node(action_item)
+        self.embed_and_store(action_item)
 
     def add_topic(self, topic: Topic):
         """
         Adds topic as a node. Doesn't add any edges. This is done in a separate method.
         """
         self.add_node(topic)
+        self.embed_and_store(topic)
 
     def add_edges_for_action_item(self, action_item: ActionItem, others: ListNodesType):
         """
@@ -226,35 +230,25 @@ class Storage:
 
         return result
 
-    def add_embedding(
-        self, node_id: str, node_type: Type[NodeTypeVar], embedding: List[float]
-    ):
+    def embed_and_store(self, node: EmbeddableNodeType):
+        embedding = self.openai_interface.get_embedding(node.text)
+        self.add_embeddings(
+            type(node),
+            [Vector(values=embedding, id=node.id)],
+        )
+
+    def add_embeddings(self, source_type: Type[NodeTypeVar], embeddings: List[Vector]):
         """
         Stores the embedding of a node in the vectorstore.
         """
-
-        try:
-            index_name = Namespace[node_type.__name__]
-        except KeyError:
-            raise Exception(
-                f"Node type {node_type.__name__} does not have an index name defined."
-            )
-        self.vectorstore.add_documents(
-            index_name=index_name,
-            documents=[{"id": node_id, "contentVector": embedding}],
-        )
+        vector_type = VectorDataType[source_type.__name__]
+        self.vectorstore.add_embeddings(vector_type, embeddings)
 
     def search_with_embedding(
-        self, node_type: Type[NodeTypeVar], embedding: List[float]
-    ):
+        self, search_for_type: Type[NodeTypeVar], embedding: List[float], top_k: int
+    ) -> List[NodeTypeVar]:
         """
         Searches the vectorstore for the nearest neighbors to the given embedding.
         """
-
-        try:
-            index_name = Namespace[node_type.__name__]
-        except KeyError:
-            raise Exception(
-                f"Node type {node_type.__name__} does not have an index name defined."
-            )
-        return self.vectorstore.search_with_vector(index_name, embedding, 10)
+        vector_type = VectorDataType[search_for_type.__name__]
+        return self.vectorstore.search_with_embedding(vector_type, embedding, top_k)

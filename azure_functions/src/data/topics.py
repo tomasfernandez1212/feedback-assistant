@@ -5,7 +5,7 @@ import time
 
 
 class Topic(BaseModel):
-    name: str
+    text: str
     id: str = ""
     created_at: float = 0
 

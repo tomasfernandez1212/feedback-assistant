@@ -201,7 +201,7 @@ class OpenAIInterface:
         """
         numbered_data_points = ""
         for i, data_point in enumerate(data_points):
-            numbered_data_points += f"{i}. {data_point.interpretation}\n"
+            numbered_data_points += f"{i}. {data_point.text}\n"
 
         numbered_existing_action_items = ""
         for i, action_item_text in enumerate(existing_action_items):
@@ -259,11 +259,11 @@ class OpenAIInterface:
         """
         numbered_data_points = ""
         for i, data_point in enumerate(data_points):
-            numbered_data_points += f"{i}. {data_point.interpretation}\n"
+            numbered_data_points += f"{i}. {data_point.text}\n"
 
         numbered_existing_topics = ""
         for i, topic_text in enumerate(existing_topics):
-            numbered_existing_topics += f"{i}. {topic_text.name}\n"
+            numbered_existing_topics += f"{i}. {topic_text.text}\n"
 
         response = openai.ChatCompletion.create(  # type: ignore
             model="gpt-3.5-turbo-0613",
@@ -301,7 +301,7 @@ class OpenAIInterface:
 
         new_topics: List[Topic] = []
         for topic_text in new_topics_text:
-            topic = Topic(name=topic_text)
+            topic = Topic(text=topic_text)
             new_topics.append(topic)
 
         return new_topics  # type: ignore
@@ -325,7 +325,7 @@ class OpenAIInterface:
         # Create a numbered list of data points and action items
         numbered_data_points = ""
         for i, data_point in enumerate(data_points):
-            numbered_data_points += f"{i}. {data_point.interpretation}\n"
+            numbered_data_points += f"{i}. {data_point.text}\n"
 
         numbered_action_items = ""
         for i, action_item in enumerate(action_items):

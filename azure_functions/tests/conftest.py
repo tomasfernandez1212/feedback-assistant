@@ -17,8 +17,7 @@ def setup():
         os.environ["STRONG_GRAPH_GRAPH_NAME"] + "-test"
     )
 
-    os.environ["COG_SEARCH_NAME"] = os.environ["COG_SEARCH_NAME_TEST"]
-    os.environ["COG_API_KEY"] = os.environ["COG_API_KEY_TEST"]
+    os.environ["PINECONE_DEFAULT_ENV"] = "TEST"
 
     from src.storage import Storage, Environment
 
