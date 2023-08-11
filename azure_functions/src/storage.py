@@ -13,7 +13,7 @@ from src.data import (
 from src.data.scores import Score, ScoreNames
 
 
-from src.openai import OpenAIInterface
+from src.llm import OpenAIInterface
 
 from src.data import ListGraphNodes, GraphNode, GraphNodeVar
 

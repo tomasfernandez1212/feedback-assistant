@@ -4,7 +4,7 @@ import azure.functions as func
 from src.storage import Storage
 from src.data.dataPoint import DataPoint
 from src.data.topics import Topic
-from src.openai import OpenAIInterface
+from src.llm import OpenAIInterface
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:

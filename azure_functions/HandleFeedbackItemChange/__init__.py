@@ -8,7 +8,7 @@ from src.data.actionItems import ActionItem
 from src.data.topics import Topic
 from src.storage import Storage
 
-from src.openai import OpenAIInterface, ScoreType
+from src.llm import OpenAIInterface, ScoreType
 
 from typing import List
 
