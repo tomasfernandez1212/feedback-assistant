@@ -252,24 +252,24 @@ class Storage:
         """
         self.vectorstore.add_embeddings(source_type.__name__, embeddings)
 
-    def search_with_embedding(
+    def search_semantically(
         self,
-        search_for_type: Type[EmbeddableGraphNodeVar],
-        embedding: List[float],
+        search_for: Type[EmbeddableGraphNodeVar],
+        from_text: str,
         top_k: int,
         min_score: float = 0.0,
     ) -> List[EmbeddableGraphNodeVar]:
         """
         Searches the vectorstore for the nearest neighbors to the given embedding.
         """
-        matches = self.vectorstore.search_with_embedding(
-            search_for_type, embedding, top_k
-        )
+
+        embedding = generate_embedding(from_text)
+        matches = self.vectorstore.search_with_embedding(search_for, embedding, top_k)
 
         nodes: List[EmbeddableGraphNodeVar] = []
         for match in matches:
             if match["score"] > min_score:
-                node = self.get_node(match["id"], search_for_type)
+                node = self.get_node(match["id"], search_for)
                 nodes.append(node)
 
         return nodes

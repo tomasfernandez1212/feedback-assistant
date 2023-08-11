@@ -4,7 +4,6 @@ import azure.functions as func
 from src.storage import Storage
 from src.data.dataPoint import DataPoint
 from src.data.topics import Topic
-from src.llm.utils import generate_embedding
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -17,8 +16,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         data_point = storage.get_node(id, DataPoint)
 
         logging.info("Get related topics")
-        data_point_embedding = generate_embedding(data_point.text)
-        existing_topics = storage.search_with_embedding(Topic, data_point_embedding, 10)
+        existing_topics = storage.search_semantically(
+            search_for=Topic, from_text=data_point.text, top_k=10, min_score=0.0
+        )
         for existing_topic in existing_topics:
             print(existing_topic)
 
