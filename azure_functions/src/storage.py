@@ -17,7 +17,7 @@ from src.llm.utils import generate_embedding
 
 from src.data import ListGraphNodes, GraphNode, GraphNodeVar
 
-from typing import List, Type, Union, Dict, Any
+from typing import List, Type, Union, Dict, Any, Tuple
 import logging
 
 from enum import Enum
@@ -258,7 +258,7 @@ class Storage:
         from_text: str,
         top_k: int,
         min_score: float = 0.0,
-    ) -> List[EmbeddableGraphNodeVar]:
+    ) -> Tuple[List[EmbeddableGraphNodeVar], List[float]]:
         """
         Searches the vectorstore for the nearest neighbors to the given embedding.
         """
@@ -267,9 +267,11 @@ class Storage:
         matches = self.vectorstore.search_with_embedding(search_for, embedding, top_k)
 
         nodes: List[EmbeddableGraphNodeVar] = []
+        scores: List[float] = []
         for match in matches:
             if match["score"] > min_score:
                 node = self.get_node(match["id"], search_for)
                 nodes.append(node)
+                scores.append(match["score"])
 
-        return nodes
+        return nodes, scores

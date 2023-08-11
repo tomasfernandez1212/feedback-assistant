@@ -16,10 +16,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         data_point = storage.get_node(id, DataPoint)
 
         logging.info("Get related topics")
-        existing_topics = storage.search_semantically(
+        existing_topics, scores = storage.search_semantically(
             search_for=Topic, from_text=data_point.text, top_k=10, min_score=0.0
         )
-        for existing_topic in existing_topics:
-            print(existing_topic)
+        for i, existing_topic in enumerate(existing_topics):
+            logging.info(
+                f"\nData Point: {data_point.text}\nTopic: {existing_topic.text}\nScore: {scores[i]}"
+            )
 
         return func.HttpResponse("Done")
