@@ -99,7 +99,9 @@ class GraphConnection:
     ) -> str:
         for key, value in node.model_dump().items():
             if updating and key == "id":
-                continue
+                continue  # Don't update the ID
+            if isinstance(value, Enum):
+                value = value.value  # Unpack the enum's value
             if isinstance(value, str):
                 escaped_value = value.replace("'", "\\'")  # Escape single quotes
                 query += f".property('{key}', '{escaped_value}')"  # Quotes to indicate string
@@ -108,8 +110,7 @@ class GraphConnection:
                     "'", "\\'"
                 )  # Escape single quotes in the list as string
                 query += f".property('{key}', '{escaped_value}')"  # Treat list as string to store as single property
-            elif isinstance(value, Enum):
-                query += f".property('{key}', {value.value})"  # Unpack the enum's value
+
             else:
                 query += f".property('{key}', {value})"  # Assume it's a number
 
@@ -172,7 +173,9 @@ class GraphConnection:
                         if attempt < MAX_RETRIES - 1:  # i.e. not the last attempt
                             time.sleep(RETRY_DELAY)  # wait before next attempt
                         else:
-                            raise  # re-raise the last exception
+                            logging.warning(
+                                f"Failed to add edge after {MAX_RETRIES} attempts."
+                            )
 
     def update_node(self, node: GraphNode):
         """
