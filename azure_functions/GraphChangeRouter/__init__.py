@@ -35,3 +35,5 @@ def main(nodes: DocumentList):
 
         if label == "FeedbackItem":
             call_function("HandleFeedbackItemChange", json.loads(node.to_json()))  # type: ignore
+        elif label == "DataPoint":
+            call_function("HandleDataPointChange", json.loads(node.to_json()))  # type: ignore
