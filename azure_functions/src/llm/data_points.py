@@ -1,9 +1,10 @@
 from typing import List
 import openai
 from src.llm.utils import unpack_function_call_arguments
+from src.data.dataPoint import DataPoint
 
 
-def generate_data_points_text(text: str) -> list[str]:
+def generate_data_points(text: str) -> list[DataPoint]:
     response = openai.ChatCompletion.create(  # type: ignore
         model="gpt-3.5-turbo-0613",
         messages=[
@@ -43,5 +44,8 @@ def generate_data_points_text(text: str) -> list[str]:
         function_call={"name": "report_interpretation"},
     )
 
-    list_of_data_points: List[str] = unpack_function_call_arguments(response)["data_points"]  # type: ignore
-    return list_of_data_points  # type: ignore
+    list_of_data_point_texts: List[str] = unpack_function_call_arguments(response)["data_points"]  # type: ignore
+    list_of_data_points: List[DataPoint] = []
+    for data_point_text in list_of_data_point_texts:
+        list_of_data_points.append(DataPoint(text=data_point_text))
+    return list_of_data_points

@@ -2,13 +2,12 @@ import logging
 
 import azure.functions as func
 
-from src.data.dataPoint import DataPoint
 from src.data.feedbackItems import FeedbackItem
 from src.data.actionItems import ActionItem
 from src.data.topics import Topic
 from src.storage import Storage
 
-from src.llm.data_points import generate_data_points_text
+from src.llm.data_points import generate_data_points
 from src.llm.action_items import generate_action_items
 from src.llm.topics import generate_topics
 from src.llm.scores import score_data_point, ScoreType
@@ -25,18 +24,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         logging.info(f"INIT: Getting FeedbackItem with ID: {id}")
         feedback_item = storage.get_node(id, FeedbackItem)
 
-        logging.info("DATAPOINTS: Getting Text For Data Points")
-        data_points_text = generate_data_points_text(feedback_item.text)
-        data_points: List[DataPoint] = []
+        logging.info("DATAPOINTS: Generating Data Points")
+        data_points = generate_data_points(feedback_item.text)
 
-        for data_point_text in data_points_text:
-            logging.info("DATAPOINTS: Creating Data Point")
-            data_point = DataPoint(text=data_point_text)
-            data_points.append(data_point)
-
+        for data_point in data_points:
             logging.info("DATAPOINTS: Scoring Data Point")
             scores = score_data_point(
-                data_point_text,
+                data_point.text,
                 feedback_item.text,
                 [
                     ScoreType.SATISFACTION,
