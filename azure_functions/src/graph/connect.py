@@ -66,7 +66,10 @@ class GraphConnection:
     def get_node_as_str(self, node_id: str) -> str:
         query = f"g.V('{node_id}')"
         callback = self.gremlin_client.submit_async(query)  # type: ignore
-        result = json.dumps(callback.result().one()[0])  # type: ignore
+        try:
+            result = json.dumps(callback.result().one()[0])  # type: ignore
+        except IndexError:
+            raise Exception(f"Node with id {node_id} does not exist.")
         return result
 
     def str_to_object(self, node_str: str, type: Type[GraphNodeVar]) -> GraphNodeVar:
