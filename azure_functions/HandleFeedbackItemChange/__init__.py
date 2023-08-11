@@ -8,7 +8,10 @@ from src.data.actionItems import ActionItem
 from src.data.topics import Topic
 from src.storage import Storage
 
-from src.llm import OpenAIInterface, ScoreType
+from src.llm.data_points import generate_data_points_text
+from src.llm.action_items import generate_action_items
+from src.llm.topics import generate_topics
+from src.llm.scores import score_data_point, ScoreType
 
 from typing import List
 
@@ -23,8 +26,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         feedback_item = storage.get_node(id, FeedbackItem)
 
         logging.info("DATAPOINTS: Getting Text For Data Points")
-        openai_interface = OpenAIInterface()
-        data_points_text = openai_interface.get_data_points_text(feedback_item.text)
+        data_points_text = generate_data_points_text(feedback_item.text)
         data_points: List[DataPoint] = []
 
         for data_point_text in data_points_text:
@@ -33,7 +35,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             data_points.append(data_point)
 
             logging.info("DATAPOINTS: Scoring Data Point")
-            scores = openai_interface.score_data_point(
+            scores = score_data_point(
                 data_point_text,
                 feedback_item.text,
                 [
@@ -52,7 +54,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             "ACTIONITEMS: Getting new action items for feedback item, embedding, and adding to storage"
         )
         existing_action_items: List[ActionItem] = []  # Get from vectorsearch
-        new_action_items = openai_interface.get_new_action_items(
+        new_action_items = generate_action_items(
             feedback_item.text, data_points, existing_action_items
         )
         for new_action_item in new_action_items:
@@ -60,9 +62,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         logging.info("TOPICS: Getting new topics for feedback item")
         existing_topics: List[Topic] = []  # Get from vectorsearch
-        new_topics = openai_interface.get_new_topics(
-            feedback_item.text, data_points, existing_topics
-        )
+        new_topics = generate_topics(feedback_item.text, data_points, existing_topics)
         for new_topic in new_topics:
             storage.add_topic(new_topic)
 

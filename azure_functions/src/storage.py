@@ -12,8 +12,8 @@ from src.data import (
 )
 from src.data.scores import Score, ScoreNames
 
+from src.llm.utils import generate_embedding
 
-from src.llm import OpenAIInterface
 
 from src.data import ListGraphNodes, GraphNode, GraphNodeVar
 
@@ -42,7 +42,7 @@ class Storage:
     """
 
     def __init__(self):
-        self.openai_interface = OpenAIInterface()
+        pass
 
     def __enter__(self):
         self.eventual_graph = GraphConnection()
@@ -238,7 +238,7 @@ class Storage:
         return result
 
     def embed_and_store(self, node: EmbeddableGraphNode):
-        embedding = self.openai_interface.get_embedding(node.text)
+        embedding = generate_embedding(node.text)
         self.add_embeddings(
             type(node),
             [Vector(values=embedding, id=node.id)],
