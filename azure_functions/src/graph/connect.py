@@ -2,7 +2,7 @@ import logging
 import time
 from typing import List, Type, Dict, Any
 from enum import Enum
-from src.data import NodeType, ListNodesType, LABEL_TO_CLASS, NodeTypeVar
+from src.data import GraphNode, ListGraphNodes, LABEL_TO_CLASS, GraphNodeVar
 
 from src.data.reviews import Review
 import os, sys, asyncio, json
@@ -69,7 +69,7 @@ class GraphConnection:
         result = json.dumps(callback.result().one()[0])  # type: ignore
         return result
 
-    def str_to_object(self, node_str: str, type: Type[NodeTypeVar]) -> NodeTypeVar:
+    def str_to_object(self, node_str: str, type: Type[GraphNodeVar]) -> GraphNodeVar:
         node_json = json.loads(node_str)
         node_unpacked = node_json["properties"]
         for key, list_of_json in node_unpacked.items():
@@ -78,12 +78,12 @@ class GraphConnection:
         node = type.model_validate(node_unpacked)
         return node
 
-    def get_node(self, id: str, type: Type[NodeTypeVar]) -> NodeTypeVar:
+    def get_node(self, id: str, type: Type[GraphNodeVar]) -> GraphNodeVar:
         node_str = self.get_node_as_str(id)
         node = self.str_to_object(node_str, type)
         return node
 
-    def get_all_nodes_by_type(self, type: Type[NodeTypeVar]) -> List[NodeTypeVar]:
+    def get_all_nodes_by_type(self, type: Type[GraphNodeVar]) -> List[GraphNodeVar]:
         query = f"g.V().hasLabel('{type.__name__}')"
         callback = self.gremlin_client.submit_async(query)  # type: ignore
         result = callback.result().all().result()  # type: ignore
@@ -95,7 +95,7 @@ class GraphConnection:
         return nodes  # type: ignore
 
     def add_properties_to_query(
-        self, query: str, node: NodeType, updating: bool = False
+        self, query: str, node: GraphNode, updating: bool = False
     ) -> str:
         for key, value in node.model_dump().items():
             if updating and key == "id":
@@ -118,7 +118,7 @@ class GraphConnection:
 
         return query
 
-    def add_node(self, node: NodeType, skip_existing: bool = True):
+    def add_node(self, node: GraphNode, skip_existing: bool = True):
         label = type(node).__name__
 
         logging.info(f"Adding {node.id} of type {label}.")
@@ -136,14 +136,14 @@ class GraphConnection:
 
         logging.info(f"Added {node.id} of type {label}.")
 
-    def add_nodes(self, nodes: ListNodesType):
+    def add_nodes(self, nodes: ListGraphNodes):
         for node in nodes:
             self.add_node(node)
 
     def add_edges(
         self,
-        from_nodes: ListNodesType,
-        to_nodes: ListNodesType,
+        from_nodes: ListGraphNodes,
+        to_nodes: ListGraphNodes,
         edge_label: str,
     ):
         """
@@ -174,7 +174,7 @@ class GraphConnection:
                         else:
                             raise  # re-raise the last exception
 
-    def update_node(self, node: NodeType):
+    def update_node(self, node: GraphNode):
         """
         Updates a node in the graph. Assumes that the node already exists in the graph.
         """
@@ -192,7 +192,7 @@ class GraphConnection:
                 f"Error updating node {node.id}. Expected 1 result, got {len(result)}."  # type: ignore
             )
 
-    def traverse(self, node: NodeType, edge_label: str) -> List[Review]:
+    def traverse(self, node: GraphNode, edge_label: str) -> List[Review]:
         query = f"g.V('{node.id}').out('{edge_label}')"
         callback = self.gremlin_client.submit(query)  # type: ignore
         future = callback.all()  # type: ignore
@@ -206,7 +206,7 @@ class GraphConnection:
         return list_of_nodes  # type: ignore
 
     def check_if_edge_exists(
-        self, from_node: NodeType, to_node: NodeType, edge_label: str
+        self, from_node: GraphNode, to_node: GraphNode, edge_label: str
     ) -> bool:
         query = f"g.V('{from_node.id}').outE('{edge_label}').where(inV().hasId('{to_node.id}'))"
         result_set = self.gremlin_client.submit(query)  # type: ignore

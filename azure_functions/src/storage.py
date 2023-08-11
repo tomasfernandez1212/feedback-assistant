@@ -1,16 +1,21 @@
 from src.graph.connect import GraphConnection
-from src.vector.search import VectorStore, VectorDataType, VectorEnv, Vector
-from src.data import FeedbackItem, EmbeddableNodeType
-from src.data import Review
-from src.data import Topic
-from src.data import AppState
-from src.data import DataPoint
+from src.vector.search import VectorStore, VectorEnv, Vector
+from src.data import (
+    FeedbackItem,
+    Review,
+    Topic,
+    AppState,
+    DataPoint,
+    ActionItem,
+    EmbeddableGraphNode,
+    EmbeddableGraphNodeVar,
+)
 from src.data.scores import Score, ScoreNames
-from src.data import ActionItem
+
 
 from src.openai import OpenAIInterface
 
-from src.data import ListNodesType, NodeType, NodeTypeVar
+from src.data import ListGraphNodes, GraphNode, GraphNodeVar
 
 from typing import List, Type, Union, Dict, Any
 import logging
@@ -56,23 +61,23 @@ class Storage:
         else:
             return self.eventual_graph
 
-    def get_node(self, id: str, type: Type[NodeTypeVar]) -> NodeTypeVar:
+    def get_node(self, id: str, type: Type[GraphNodeVar]) -> GraphNodeVar:
         return self._get_graph(type).get_node(id, type)
 
-    def get_all_nodes_by_type(self, type: Type[NodeTypeVar]) -> List[NodeTypeVar]:
+    def get_all_nodes_by_type(self, type: Type[GraphNodeVar]) -> List[GraphNodeVar]:
         return self._get_graph(type).get_all_nodes_by_type(type)
 
-    def add_node(self, node: NodeType):
+    def add_node(self, node: GraphNode):
         self._get_graph(type(node)).add_node(node)
 
-    def add_nodes(self, nodes: ListNodesType):
+    def add_nodes(self, nodes: ListGraphNodes):
         for node in nodes:
             self.add_node(node)
 
     def add_edges(
         self,
-        from_nodes: ListNodesType,
-        to_nodes: ListNodesType,
+        from_nodes: ListGraphNodes,
+        to_nodes: ListGraphNodes,
         edge_label: str,
     ):
         graph = self._get_graph(type(from_nodes[0]))
@@ -81,16 +86,16 @@ class Storage:
         graph.add_edges(from_nodes, to_nodes, edge_label)
 
     def check_if_edge_exists(
-        self, from_node: NodeType, to_node: NodeType, edge_label: str
+        self, from_node: GraphNode, to_node: GraphNode, edge_label: str
     ) -> bool:
         return self._get_graph(type(from_node)).check_if_edge_exists(
             from_node, to_node, edge_label
         )
 
-    def traverse(self, node: NodeType, edge_label: str) -> ListNodesType:
+    def traverse(self, node: GraphNode, edge_label: str) -> ListGraphNodes:
         return self._get_graph(type(node)).traverse(node, edge_label)
 
-    def update_node(self, node: NodeType):
+    def update_node(self, node: GraphNode):
         self._get_graph(type(node)).update_node(node)
 
     def reset_storage(self, environment: Environment):
@@ -133,7 +138,7 @@ class Storage:
         self.add_edges([data_point], [feedback_item], "derived_from")  # reverse edge
         self.embed_and_store(data_point)
 
-    def add_score(self, node: NodeType, score: Score):
+    def add_score(self, node: GraphNode, score: Score):
         """
         Adds score for node, but also adds edges between score and node being scored.
         """
@@ -155,7 +160,9 @@ class Storage:
         self.add_node(topic)
         self.embed_and_store(topic)
 
-    def add_edges_for_action_item(self, action_item: ActionItem, others: ListNodesType):
+    def add_edges_for_action_item(
+        self, action_item: ActionItem, others: ListGraphNodes
+    ):
         """
         Adds edges between action item and other nodes.
         """
@@ -230,25 +237,39 @@ class Storage:
 
         return result
 
-    def embed_and_store(self, node: EmbeddableNodeType):
+    def embed_and_store(self, node: EmbeddableGraphNode):
         embedding = self.openai_interface.get_embedding(node.text)
         self.add_embeddings(
             type(node),
             [Vector(values=embedding, id=node.id)],
         )
 
-    def add_embeddings(self, source_type: Type[NodeTypeVar], embeddings: List[Vector]):
+    def add_embeddings(
+        self, source_type: Type[EmbeddableGraphNodeVar], embeddings: List[Vector]
+    ):
         """
         Stores the embedding of a node in the vectorstore.
         """
-        vector_type = VectorDataType[source_type.__name__]
-        self.vectorstore.add_embeddings(vector_type, embeddings)
+        self.vectorstore.add_embeddings(source_type.__name__, embeddings)
 
     def search_with_embedding(
-        self, search_for_type: Type[NodeTypeVar], embedding: List[float], top_k: int
-    ) -> List[NodeTypeVar]:
+        self,
+        search_for_type: Type[EmbeddableGraphNodeVar],
+        embedding: List[float],
+        top_k: int,
+        min_score: float = 0.0,
+    ) -> List[EmbeddableGraphNodeVar]:
         """
         Searches the vectorstore for the nearest neighbors to the given embedding.
         """
-        vector_type = VectorDataType[search_for_type.__name__]
-        return self.vectorstore.search_with_embedding(vector_type, embedding, top_k)
+        matches = self.vectorstore.search_with_embedding(
+            search_for_type, embedding, top_k
+        )
+
+        nodes: List[EmbeddableGraphNodeVar] = []
+        for match in matches:
+            if match["score"] > min_score:
+                node = self.get_node(match["id"], search_for_type)
+                nodes.append(node)
+
+        return nodes

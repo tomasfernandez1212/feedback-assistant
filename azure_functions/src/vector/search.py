@@ -1,9 +1,12 @@
 import os
 from enum import Enum
-from typing import List, Dict
+from typing import List, Dict, Type
 
 import pinecone  # type: ignore
 from pinecone.core.client.models import Vector  # type: ignore
+from pinecone.core.client.model.scored_vector import ScoredVector  # type: ignore
+
+from src.data import EMBEDDABLE_CLASS_NAMES, EmbeddableGraphNodeVar
 
 
 class VectorDataType(Enum):
@@ -32,15 +35,15 @@ class VectorStore:
         self.namespaces_per_env: Dict[str, List[str]] = {}
         for environment in VectorEnv:
             env_namespaces: List[str] = []
-            for vector_type in VectorDataType:
-                env_namespaces.append(self.get_namespace(environment, vector_type))
+            for embeddable_class in EMBEDDABLE_CLASS_NAMES:
+                env_namespaces.append(self.get_namespace(environment, embeddable_class))
             self.namespaces_per_env[environment.value] = env_namespaces
 
-    def get_namespace(self, environment: VectorEnv, vector_type: VectorDataType) -> str:
+    def get_namespace(self, environment: VectorEnv, node_class_name: str) -> str:
         """
         Get the namespace for the environment and content type.
         """
-        return f"{environment.value}-{vector_type.value}"
+        return f"{environment.value}-{node_class_name}"
 
     def create_index(self, index_name: str) -> None:
         """
@@ -68,27 +71,30 @@ class VectorStore:
             self.index.delete(namespace=namespace, delete_all=True)  # type: ignore
 
     def search_with_embedding(
-        self, vector_type: VectorDataType, vector: List[float], top_k: int
-    ):
+        self,
+        search_for_type: Type[EmbeddableGraphNodeVar],
+        vector: List[float],
+        top_k: int,
+    ) -> List[ScoredVector]:
         """
         Search using embedding in the index.
         """
+        class_namespace = self.get_namespace(self.default_env, search_for_type.__name__)
         query_reponse = self.index.query(  # type: ignore
-            namespace=self.get_namespace(self.default_env, vector_type),
+            namespace=class_namespace,
             vector=vector,
             top_k=top_k,
         )
+        matches = query_reponse["matches"]
 
-        print(query_reponse)
+        return matches
 
-    def add_embeddings(
-        self, vector_type: VectorDataType, embeddings: List[Vector]
-    ) -> None:
+    def add_embeddings(self, node_class_name: str, embeddings: List[Vector]) -> None:
         """
         Upload multiple embeddings to the index
         """
         self.index.upsert(  # type: ignore
-            namespace=self.get_namespace(self.default_env, vector_type),
+            namespace=self.get_namespace(self.default_env, node_class_name),
             vectors=embeddings,
         )
 
