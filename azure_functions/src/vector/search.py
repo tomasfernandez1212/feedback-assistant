@@ -67,7 +67,14 @@ class VectorStore:
         """
         Delete all documents with in the environment using namespaces.
         """
-        for namespace in self.namespaces_per_env[environment.value]:
+
+        all_namespaces = list(self.index.describe_index_stats()["namespaces"].keys())  # type: ignore
+        env_namespaces = [
+            namespace
+            for namespace in all_namespaces
+            if namespace.startswith(environment.value)
+        ]
+        for namespace in env_namespaces:
             self.index.delete(namespace=namespace, delete_all=True)  # type: ignore
 
     def search_with_embedding(
