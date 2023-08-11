@@ -47,29 +47,31 @@ class GraphConnection:
         if confirm_graph_name != self.graph_name:
             raise Exception("Graph name does not match")
         query = "g.V().drop()"
-        callback = self.gremlin_client.submit(query)  # type: ignore
-        callback.one()  # type: ignore
+        result = self.submit_query(query)  # type: ignore
+        logging.info(f"Reset graph {self.graph_name}.")
 
     def delete_node(self, id: str):
         query = f"g.V('{id}').drop()"
-        callback = self.gremlin_client.submit(query)  # type: ignore
-        callback.one()  # type: ignore
+        result = self.submit_query(query)  # type: ignore
+        if len(result) != 1:
+            raise Exception(f"Error deleting node {id}.")
+        logging.info(f"Deleted node {id}.")
 
     def check_if_node_exists(self, id: str) -> bool:
         query = f"g.V('{id}')"
-        callback = self.gremlin_client.submit_async(query)  # type: ignore
-        one: list = callback.result().one()  # type: ignore
-        result = len(one)  # type: ignore
-        node_exists: bool = result >= 1  # type: ignore
+        result = self.submit_query(query)  # type: ignore
+        if len(result) == 0:
+            node_exists = False
+        else:
+            node_exists = True
         return node_exists  # type: ignore
 
     def get_node_as_str(self, node_id: str) -> str:
         query = f"g.V('{node_id}')"
-        callback = self.gremlin_client.submit_async(query)  # type: ignore
-        try:
-            result = json.dumps(callback.result().one()[0])  # type: ignore
-        except IndexError:
-            raise Exception(f"Node with id {node_id} does not exist.")
+        result = self.submit_query(query)  # type: ignore
+        if len(result) != 1:
+            raise Exception(f"Found {len(result)} nodes with ID {node_id}.")
+        result = json.dumps(result[0])  # type: ignore
         return result
 
     def str_to_object(self, node_str: str, type: Type[GraphNodeVar]) -> GraphNodeVar:
@@ -88,8 +90,7 @@ class GraphConnection:
 
     def get_all_nodes_by_type(self, type: Type[GraphNodeVar]) -> List[GraphNodeVar]:
         query = f"g.V().hasLabel('{type.__name__}')"
-        callback = self.gremlin_client.submit_async(query)  # type: ignore
-        result = callback.result().all().result()  # type: ignore
+        result = self.submit_query(query)  # type: ignore
         nodes = []
         for node_dict in result:  # type: ignore
             node_str = json.dumps(node_dict)
@@ -135,8 +136,9 @@ class GraphConnection:
         query = f"g.addV('{label}')"
         query = self.add_properties_to_query(query, node)
 
-        callback = self.gremlin_client.submit(query)  # type: ignore
-        result_set = callback.all()  # type: ignore
+        result = self.submit_query(query)  # type: ignore
+        if len(result) == 0:
+            raise Exception(f"Error adding node {node.id} of type {label}.")
 
         logging.info(f"Added {node.id} of type {label}.")
 
@@ -167,9 +169,8 @@ class GraphConnection:
                     try:
                         query = f"g.V('{from_node.id}').addE('{edge_label}').to(g.V('{to_node.id}'))"
                         logging.info(f"Attempt: {attempt + 1} at adding edge.")
-                        callback = self.gremlin_client.submit(query)  # type: ignore
-                        edge = callback.one()  # type: ignore
-                        if len(edge) > 0:  # type: ignore
+                        result = self.submit_query(query)  # type: ignore
+                        if len(result) == 1:  # type: ignore
                             logging.info("Successfully added edge.")
                             break  # successfully added this edge
                     except:
@@ -190,8 +191,7 @@ class GraphConnection:
         query = f"g.V('{node.id}')"
         query = self.add_properties_to_query(query, node, updating=True)
 
-        result_set = self.gremlin_client.submit(query)  # type: ignore
-        result = result_set.all().result()  # type: ignore
+        result = self.submit_query(query)  # type: ignore
 
         if len(result) != 1:  # type: ignore
             raise Exception(
@@ -200,9 +200,7 @@ class GraphConnection:
 
     def traverse(self, node: GraphNode, edge_label: str) -> List[Review]:
         query = f"g.V('{node.id}').out('{edge_label}')"
-        callback = self.gremlin_client.submit(query)  # type: ignore
-        future = callback.all()  # type: ignore
-        list_of_node_dicts: list[Dict[str, Any]] = future.result()  # type: ignore
+        list_of_node_dicts = self.submit_query(query)  # type: ignore
         list_of_nodes = []
         for node_dict in list_of_node_dicts:  # type: ignore
             expected_type = self.graph_label_to_class[node_dict["label"]]  # type: ignore
@@ -215,9 +213,11 @@ class GraphConnection:
         self, from_node: GraphNode, to_node: GraphNode, edge_label: str
     ) -> bool:
         query = f"g.V('{from_node.id}').outE('{edge_label}').where(inV().hasId('{to_node.id}'))"
-        result_set = self.gremlin_client.submit(query)  # type: ignore
-        return len(result_set.all().result()) > 0  # type: ignore
+        result = self.submit_query(query)  # type: ignore
+        return len(result) > 0  # type: ignore
 
-    def submit_query(self, query: str) -> Any:
+    def submit_query(self, query: str) -> List[Dict[str, Any]]:
         result_set = self.gremlin_client.submit(query)  # type: ignore
-        return result_set.all().result()  # type: ignore
+        future = result_set.all()  # type: ignore
+        result = future.result()  # type: ignore
+        return result  # type: ignore
