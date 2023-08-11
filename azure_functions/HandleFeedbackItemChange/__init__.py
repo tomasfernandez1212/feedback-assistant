@@ -12,8 +12,6 @@ from src.llm.action_items import generate_action_items
 from src.llm.topics import generate_topics
 from src.llm.scores import score_data_point, ScoreType
 
-from typing import List
-
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("INIT: Unpacking Request Body")
@@ -44,20 +42,22 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             for score in scores:
                 storage.add_score(data_point, score)
 
-        logging.info(
-            "ACTIONITEMS: Getting new action items for feedback item, embedding, and adding to storage"
+        logging.info("ACTIONITEMS: Generating new action items and adding to storage")
+        existing_action_items, scores = storage.search_semantically(
+            search_for=ActionItem, from_text=feedback_item.text, top_k=10, min_score=0.0
         )
-        existing_action_items: List[ActionItem] = []  # Get from vectorsearch
         new_action_items = generate_action_items(
             feedback_item.text, data_points, existing_action_items
         )
         for new_action_item in new_action_items:
             storage.add_action_item(new_action_item)
 
-        logging.info("TOPICS: Getting new topics for feedback item")
-        existing_topics: List[Topic] = []  # Get from vectorsearch
+        logging.info("TOPICS: Generating new topics and adding to storage")
+        existing_topics, scores = storage.search_semantically(
+            search_for=Topic, from_text=feedback_item.text, top_k=10, min_score=0.0
+        )
         new_topics = generate_topics(feedback_item.text, data_points, existing_topics)
         for new_topic in new_topics:
             storage.add_topic(new_topic)
 
-        return func.HttpResponse(f"Hanlded FeedbackItem Change.", status_code=200)
+        return func.HttpResponse(f"Handled FeedbackItem Change.", status_code=200)
