@@ -30,6 +30,11 @@ def main(nodes: DocumentList):
     for node in nodes:  # type: ignore
         id = node["id"]  # type: ignore
         label = node["label"]  # type: ignore
+        node_or_edge = node["type"]  # type: ignore
+
+        # Ignore edges
+        if node_or_edge == "edge":
+            continue
 
         logging.info(f"Detected change to {id} of type {label} at {current_time}")
 
