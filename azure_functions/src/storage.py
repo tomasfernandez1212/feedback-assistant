@@ -80,6 +80,9 @@ class Storage:
         to_nodes: ListGraphNodes,
         edge_label: str,
     ):
+        if len(from_nodes) == 0 or len(to_nodes) == 0:
+            return
+
         graph = self._get_graph(type(from_nodes[0]))
 
         # Add edges to graph

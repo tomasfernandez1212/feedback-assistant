@@ -160,6 +160,9 @@ class GraphConnection:
         For this reason we retry the query if it returns an empty list.
         """
 
+        if len(from_nodes) == 0 or len(to_nodes) == 0:
+            return
+
         MAX_RETRIES = 3
         RETRY_DELAY = 0.2  # time to wait between retries, in seconds
 
