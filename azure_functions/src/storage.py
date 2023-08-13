@@ -75,11 +75,14 @@ class Storage:
         for node in nodes:
             self.add_node(node)
 
-    def add_edges(
+    def connect_nodes(
         self,
         from_nodes: ListGraphNodes,
         to_nodes: ListGraphNodes,
     ):
+        """
+        Connects nodes in both the forward and reverse direction.
+        """
         # If either list is empty, don't do anything
         if len(from_nodes) == 0 or len(to_nodes) == 0:
             return
@@ -91,11 +94,13 @@ class Storage:
         # Get the right graph
         graph = self._get_graph(from_type)
 
-        # Determine edge label
+        # Add forward edges
         edge_label = determine_edge_label(from_type, to_type)
-
-        # Add edges to graph
         graph.add_edges(from_nodes, to_nodes, edge_label)
+
+        # Add reverse edges
+        edge_label = determine_edge_label(to_type, from_type)
+        graph.add_edges(to_nodes, from_nodes, edge_label)
 
     def check_if_edge_exists(
         self, from_node: GraphNode, to_node: GraphNode, edge_label: str
@@ -133,8 +138,7 @@ class Storage:
 
         self.add_node(source)
         self.add_node(feedback_item)
-        self.add_edges([feedback_item], [source])
-        self.add_edges([source], [feedback_item])
+        self.connect_nodes([feedback_item], [source])
 
     def add_data_point_for_feedback_item(
         self, data_point: DataPoint, feedback_item: FeedbackItem
@@ -146,8 +150,7 @@ class Storage:
         """
 
         self.add_node(data_point)
-        self.add_edges([feedback_item], [data_point])
-        self.add_edges([data_point], [feedback_item])  # reverse edge
+        self.connect_nodes([feedback_item], [data_point])
         self.embed_and_store(data_point)
 
     def add_score(self, node: GraphNode, score: Score):
@@ -155,8 +158,7 @@ class Storage:
         Adds score for node, but also adds edges between score and node being scored.
         """
         self.add_node(score)
-        self.add_edges([score], [node])
-        self.add_edges([node], [score])
+        self.connect_nodes([score], [node])
 
     def add_action_item(self, action_item: ActionItem):
         """
@@ -171,15 +173,6 @@ class Storage:
         """
         self.add_node(topic)
         self.embed_and_store(topic)
-
-    def add_edges_for_action_item(
-        self, action_item: ActionItem, others: ListGraphNodes
-    ):
-        """
-        Adds edges between action item and other nodes.
-        """
-        self.add_edges([action_item], others)
-        self.add_edges(others, [action_item])
 
     def get_feedback_item_source(self, feedback_item: FeedbackItem) -> Review:
         result = self.traverse(feedback_item, "constituted_by")

@@ -27,8 +27,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         related_action_items = infer_data_point_to_action_items_connections(
             data_point, existing_action_items
         )
-        storage.add_edges([data_point], related_action_items)
-        storage.add_edges(related_action_items, [data_point])
+        storage.connect_nodes([data_point], related_action_items)
         logging.info(
             f"Data Point: \n\n {data_point.text} \n\nAddressed by Action Items: {related_action_items}\n\n"
         )
@@ -40,8 +39,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         related_topics = infer_data_point_to_topics_connections(
             data_point, existing_topics
         )
-        storage.add_edges([data_point], related_topics)
-        storage.add_edges(related_topics, [data_point])
+        storage.connect_nodes([data_point], related_topics)
         logging.info(
             f"Data Point: \n\n {data_point.text} \n\nBelongs to Topics: {related_topics}\n\n"
         )
