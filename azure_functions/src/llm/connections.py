@@ -272,3 +272,66 @@ def infer_topic_to_data_points_connections(
             related_data_points.append(data_points[i])
 
     return related_data_points  # type: ignore
+
+
+def infer_action_item_to_data_points_connections(
+    action_item: ActionItem,
+    data_points: List[DataPoint],
+) -> List[DataPoint]:
+    """
+    Given a single action_item, and a list of data points, infer which subset of data points are addressed by the action item.
+    """
+
+    # Exit if there are no data points
+    if len(data_points) == 0:
+        return []
+
+    numbered_data_points = ""
+    for i, data_point in enumerate(data_points):
+        numbered_data_points += f"{i}. {data_point.text}\n"
+
+    response = openai.ChatCompletion.create(  # type: ignore
+        model="gpt-3.5-turbo-0613",
+        temperature=0.0,
+        messages=[
+            {
+                "role": "system",
+                "content": "You are an expert in customer service. Your task is to discern if a given takeaway drawn from customers' feedback can be directly addressed by a provided action item.",
+            },
+            {
+                "role": "user",
+                "content": f"For each of the following takeaways, report if the takeaway can be directly addressed by this action item: '{action_item.text}':\n\n{numbered_data_points}",
+            },
+        ],
+        functions=[
+            {
+                "name": "report_takeaways",
+                "description": f"Use this to report whether each takeaway can be directly addressed by this action item: '{action_item.text}'.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "addressed": {
+                            "type": "array",
+                            "description": "A list of booleans. Do not add any comentary. Only report with booleans. For example, [true, false, true].",
+                            "items": {
+                                "type": "boolean",
+                                "description": f"Indicates whether the takeaway can be directly addressed by the action item: '{action_item.text}'.",
+                            },
+                        }
+                    },
+                    "required": ["addressed"],
+                },
+            },
+        ],
+        function_call={"name": "report_takeaways"},
+    )
+
+    booleans = unpack_function_call_arguments(response)["addressed"]  # type: ignore
+
+    # Convert the booleans to a list of data points
+    related_data_points: List[DataPoint] = []
+    for i, boolean in enumerate(booleans):
+        if boolean:
+            related_data_points.append(data_points[i])
+
+    return related_data_points  # type: ignore

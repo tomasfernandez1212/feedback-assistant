@@ -217,6 +217,29 @@ class Storage:
         topics = self.get_data_point_topics(data_point)
         self.connect_nodes(action_items, topics)
 
+    def add_action_item_to_data_points_edges(
+        self, action_item: ActionItem, data_points: List[DataPoint]
+    ):
+        """
+        Adds edges between single action item and multiple data points.
+        This is used when an action item is created, and we search for multiple data points it is related to.
+
+        By connecting this action item to these data points, we can infer other connections which we also handle here.
+        """
+
+        # Explicit Edges
+        self.connect_nodes([action_item], data_points)
+
+        # Implicit Edges
+        feedback_items: List[FeedbackItem] = []
+        for data_point in data_points:
+            feedback_items.append(self.get_data_point_parent_feedback_item(data_point))
+        self.connect_nodes([action_item], feedback_items)
+        topics: List[Topic] = []
+        for data_point in data_points:
+            topics.extend(self.get_data_point_topics(data_point))
+        self.connect_nodes([action_item], topics)
+
     def add_data_point_to_topics_edges(
         self, data_point: DataPoint, topics: List[Topic]
     ):
