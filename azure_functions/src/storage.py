@@ -153,6 +153,37 @@ class Storage:
         self.connect_nodes([feedback_item], [data_point])
         self.embed_and_store(data_point)
 
+    def get_data_point_parent_feedback_item(
+        self, data_point: DataPoint
+    ) -> FeedbackItem:
+        """
+        Gets the feedback item that the data point is a child of.
+        """
+        feedback_items = self.traverse(
+            data_point, determine_edge_label(DataPoint, FeedbackItem)
+        )
+        if len(feedback_items) != 1:
+            raise Exception(
+                f"DataPoint does not have exactly one parent feedback item. Count: {len(feedback_items)}"
+            )
+        return feedback_items[0]  # type: ignore
+
+    def get_data_point_topics(self, data_point: DataPoint) -> List[Topic]:
+        """
+        Gets the topics that the data point belongs to.
+        """
+        topics = self.traverse(data_point, determine_edge_label(DataPoint, Topic))
+        return topics  # type: ignore
+
+    def get_data_point_action_items(self, data_point: DataPoint) -> List[ActionItem]:
+        """
+        Gets the topics that the data point belongs to.
+        """
+        action_items = self.traverse(
+            data_point, determine_edge_label(DataPoint, ActionItem)
+        )
+        return action_items  # type: ignore
+
     def add_score(self, node: GraphNode, score: Score):
         """
         Adds score for node, but also adds edges between score and node being scored.
@@ -167,6 +198,44 @@ class Storage:
         self.add_node(action_item)
         self.embed_and_store(action_item)
 
+    def add_data_point_to_action_items_edges(
+        self, data_point: DataPoint, action_items: List[ActionItem]
+    ):
+        """
+        Adds edges between single data point and multiple action items.
+        This is used when a data point is created, and we search for multiple action items it is related to.
+
+        By connecting this data point to these action items, we can infer other connections which we also handle here.
+        """
+
+        # Explicit Edges
+        self.connect_nodes([data_point], action_items)
+
+        # Implicit Edges
+        feedback_item = self.get_data_point_parent_feedback_item(data_point)
+        self.connect_nodes(action_items, [feedback_item])
+        topics = self.get_data_point_topics(data_point)
+        self.connect_nodes(action_items, topics)
+
+    def add_data_point_to_topics_edges(
+        self, data_point: DataPoint, topics: List[Topic]
+    ):
+        """
+        Adds edges between single data point and multiple topics.
+        This is used when a data point is created, and we search for multiple topics it is related to.
+
+        By connecting this data point to these topics, we can infer other connections which we also handle here.
+        """
+
+        # Explicit Edges
+        self.connect_nodes([data_point], topics)
+
+        # Implicit Edges
+        feedback_item = self.get_data_point_parent_feedback_item(data_point)
+        self.connect_nodes(topics, [feedback_item])
+        action_items = self.get_data_point_action_items(data_point)
+        self.connect_nodes(topics, action_items)
+
     def add_topic(self, topic: Topic):
         """
         Adds topic as a node. Doesn't add any edges. This is done in a separate method.
@@ -175,7 +244,9 @@ class Storage:
         self.embed_and_store(topic)
 
     def get_feedback_item_source(self, feedback_item: FeedbackItem) -> Review:
-        result = self.traverse(feedback_item, "constituted_by")
+        result = self.traverse(
+            feedback_item, determine_edge_label(FeedbackItem, Review)
+        )
         if len(result) != 1:
             raise Exception(
                 f"FeedbackItem is not constituted by exactly one element. Count: {len(result)}"
