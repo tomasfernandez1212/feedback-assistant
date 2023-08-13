@@ -164,7 +164,7 @@ class Storage:
         )
         if len(feedback_items) != 1:
             raise Exception(
-                f"DataPoint does not have exactly one parent feedback item. Count: {len(feedback_items)}"
+                f"DataPoint {data_point.id} does not have exactly one parent feedback item. Count: {len(feedback_items)}"
             )
         return feedback_items[0]  # type: ignore
 
@@ -177,7 +177,7 @@ class Storage:
 
     def get_data_point_action_items(self, data_point: DataPoint) -> List[ActionItem]:
         """
-        Gets the topics that the data point belongs to.
+        Gets the action items that the data point belongs to.
         """
         action_items = self.traverse(
             data_point, determine_edge_label(DataPoint, ActionItem)
@@ -235,6 +235,29 @@ class Storage:
         self.connect_nodes(topics, [feedback_item])
         action_items = self.get_data_point_action_items(data_point)
         self.connect_nodes(topics, action_items)
+
+    def add_topic_to_data_points_edges(
+        self, topic: Topic, data_points: List[DataPoint]
+    ):
+        """
+        Adds edges between single topic and multiple data points.
+        This is used when a topic is created, and we search for multiple data points it is related to.
+
+        By connecting this topic to these data points, we can infer other connections which we also handle here.
+        """
+
+        # Explicit Edges
+        self.connect_nodes([topic], data_points)
+
+        # Implicit Edges
+        feedback_items: List[FeedbackItem] = []
+        for data_point in data_points:
+            feedback_items.append(self.get_data_point_parent_feedback_item(data_point))
+        self.connect_nodes([topic], feedback_items)
+        action_items: List[ActionItem] = []
+        for data_point in data_points:
+            action_items.extend(self.get_data_point_action_items(data_point))
+        self.connect_nodes([topic], action_items)
 
     def add_topic(self, topic: Topic):
         """

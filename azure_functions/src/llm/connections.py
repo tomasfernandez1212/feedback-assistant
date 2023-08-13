@@ -91,7 +91,7 @@ def infer_data_point_to_action_items_connections(
     action_items: List[ActionItem],
 ) -> List[ActionItem]:
     """
-    Given a single data point, and a list of action items, infer which action items address the data point.
+    Given a single data point, and a list of action items, infer which subset of action items address the data point.
     """
 
     # Exit if there are no action items
@@ -104,6 +104,7 @@ def infer_data_point_to_action_items_connections(
 
     response = openai.ChatCompletion.create(  # type: ignore
         model="gpt-3.5-turbo-0613",
+        temperature=0.0,
         messages=[
             {
                 "role": "system",
@@ -123,7 +124,7 @@ def infer_data_point_to_action_items_connections(
                     "properties": {
                         "addresses": {
                             "type": "array",
-                            "description": "A list of booleans.",
+                            "description": "A list of booleans. Do not add any comentary. Only report with booleans. For example, [true, false, true].",
                             "items": {
                                 "type": "boolean",
                                 "description": "Whether the action item directly addresses the takeaway.",
@@ -153,7 +154,7 @@ def infer_data_point_to_topics_connections(
     topics: List[Topic],
 ) -> List[Topic]:
     """
-    Given a single data point, and a list of topics, infer which topics the data point belongs to.
+    Given a single data point, and a list of topics, infer which subset of topics the data point belongs to.
     """
 
     # Exit if there are no topics
@@ -185,7 +186,7 @@ def infer_data_point_to_topics_connections(
                     "properties": {
                         "belongs_to": {
                             "type": "array",
-                            "description": "A list of booleans.",
+                            "description": "A list of booleans. Do not add any comentary. Only report with booleans. For example, [true, false, true].",
                             "items": {
                                 "type": "boolean",
                                 "description": "Whether the takeaway belongs to the topic.",
@@ -208,3 +209,66 @@ def infer_data_point_to_topics_connections(
             related_topics.append(topics[i])
 
     return related_topics  # type: ignore
+
+
+def infer_topic_to_data_points_connections(
+    topic: Topic,
+    data_points: List[DataPoint],
+) -> List[DataPoint]:
+    """
+    Given a single topic, and a list of data points, infer which subset of data points belong to the topic.
+    """
+
+    # Exit if there are no data points
+    if len(data_points) == 0:
+        return []
+
+    numbered_data_points = ""
+    for i, data_point in enumerate(data_points):
+        numbered_data_points += f"{i}. {data_point.text}\n"
+
+    response = openai.ChatCompletion.create(  # type: ignore
+        model="gpt-3.5-turbo-0613",
+        temperature=0.0,
+        messages=[
+            {
+                "role": "system",
+                "content": "You are an expert in customer service. Your task is to discern if a given takeaway directly discusses the specified topic. Ensure you look for clear, explicit, and literal mentions or indications of the topic within each takeaway. Avoid making indirect or tangential associations. For example, if the topic is 'Ambiance', and one takeaway is 'The lights were too bright.', that's a direct mention. But if another takeaway is 'The apple pie was delicious.', that does not explicitly discuss 'Ambiance' even if ambiance might influence the dining experience.",
+            },
+            {
+                "role": "user",
+                "content": f"For each of the following takeaways, report if the takeaway is talking about the topic '{topic.text}':\n\n{numbered_data_points}",
+            },
+        ],
+        functions=[
+            {
+                "name": "report_takeaways",
+                "description": f"Use this to report whether each takeaway is talking about the topic '{topic.text}'.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "belongs_to": {
+                            "type": "array",
+                            "description": "A list of booleans. Do not add any comentary. Only report with booleans. For example, [true, false, true].",
+                            "items": {
+                                "type": "boolean",
+                                "description": f"Indicates whether the takeaway is talking about the topic of '{topic.text}'.",
+                            },
+                        }
+                    },
+                    "required": ["belongs_to"],
+                },
+            },
+        ],
+        function_call={"name": "report_takeaways"},
+    )
+
+    booleans = unpack_function_call_arguments(response)["belongs_to"]  # type: ignore
+
+    # Convert the booleans to a list of data points
+    related_data_points: List[DataPoint] = []
+    for i, boolean in enumerate(booleans):
+        if boolean:
+            related_data_points.append(data_points[i])
+
+    return related_data_points  # type: ignore
