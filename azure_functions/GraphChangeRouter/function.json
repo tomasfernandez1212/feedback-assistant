@@ -4,9 +4,9 @@
   "bindings": [
     {
       "type": "cosmosDBTrigger",
-      "name": "nodes",
+      "name": "documents",
       "direction": "in",
-      "leaseCollectionName": "GraphChangeRouterLeases",
+      "leaseCollectionName": "GraphChangeLeases",
       "connectionStringSetting": "feedbackassistant_DOCUMENTDB",
       "databaseName": "feedback-assistant",
       "collectionName": "feedback-assistant",

@@ -7,7 +7,7 @@ import requests
 
 from azure.functions import DocumentList
 
-FUNCTION_APP_NAME = "feedback-assistant-function-app"
+FUNCTION_APP_NAME = "fa-function-app"
 
 
 def call_function(function_name: str, body: dict[str, str]):
@@ -24,21 +24,23 @@ def call_function(function_name: str, body: dict[str, str]):
     threading.Thread(target=requests.post, args=(url,), kwargs={"json": body}).start()
 
 
-def main(nodes: DocumentList):
+def main(documents: DocumentList):
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    for node in nodes:  # type: ignore
+    for node in documents:  # type: ignore
         id = node["id"]  # type: ignore
         label = node["label"]  # type: ignore
-        node_or_edge = node["type"]  # type: ignore
-
-        # Ignore edges
-        if node_or_edge == "edge":
-            continue
 
         logging.info(f"Detected change to {id} of type {label} at {current_time}")
+        logging.info(f"Node: {node.to_json()}")  # type: ignore
 
         if label == "FeedbackItem":
             call_function("HandleFeedbackItemChange", json.loads(node.to_json()))  # type: ignore
         elif label == "DataPoint":
             call_function("HandleDataPointChange", json.loads(node.to_json()))  # type: ignore
+        elif label == "Topic":
+            call_function("HandleTopicChange", json.loads(node.to_json()))  # type: ignore
+        elif label == "ActionItem":
+            call_function("HandleActionItemChange", json.loads(node.to_json()))  # type: ignore
+        else:
+            logging.info(f"Unknown node type: {label}")
