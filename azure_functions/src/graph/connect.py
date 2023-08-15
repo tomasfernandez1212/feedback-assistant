@@ -154,35 +154,47 @@ class GraphConnection:
     ):
         """
         Adds edges between nodes. Assumes that the nodes already exist in the graph.
+        """
+
+        if len(from_nodes) == 0 or len(to_nodes) == 0:
+            return
+
+        for from_node in from_nodes:
+            for to_node in to_nodes:
+                self.add_edge(from_node, to_node, edge_label)
+
+    def add_edge(self, from_node: GraphNode, to_node: GraphNode, edge_label: str):
+        """
+        Add edge between two nodes. Assumes that the nodes already exist in the graph.
 
         Due to distributed nature of CosmosDB, there is eventual consistency but it is possible that the nodes do not exist in the graph yet.
 
         For this reason we retry the query if it returns an empty list.
         """
 
-        if len(from_nodes) == 0 or len(to_nodes) == 0:
+        edge_exists = self.check_if_edge_exists(from_node, to_node, edge_label)
+        if edge_exists:
+            logging.info(
+                f"Edge from {from_node.id} to {to_node.id} of type {edge_label} already exists."
+            )
             return
 
         MAX_RETRIES = 3
         RETRY_DELAY = 0.2  # time to wait between retries, in seconds
 
-        for from_node in from_nodes:
-            for to_node in to_nodes:
-                for attempt in range(MAX_RETRIES):
-                    try:
-                        query = f"g.V('{from_node.id}').addE('{edge_label}').to(g.V('{to_node.id}'))"
-                        logging.info(f"Attempt: {attempt + 1} at adding edge.")
-                        result = self.submit_query(query)  # type: ignore
-                        if len(result) == 1:  # type: ignore
-                            logging.info("Successfully added edge.")
-                            break  # successfully added this edge
-                    except:
-                        if attempt < MAX_RETRIES - 1:  # i.e. not the last attempt
-                            time.sleep(RETRY_DELAY)  # wait before next attempt
-                        else:
-                            logging.warning(
-                                f"Failed to add edge after {MAX_RETRIES} attempts."
-                            )
+        for attempt in range(MAX_RETRIES):
+            try:
+                query = f"g.V('{from_node.id}').addE('{edge_label}').to(g.V('{to_node.id}'))"
+                logging.info(f"Attempt: {attempt + 1} at adding edge.")
+                result = self.submit_query(query)  # type: ignore
+                if len(result) == 1:  # type: ignore
+                    logging.info("Successfully added edge.")
+                    break  # successfully added this edge
+            except:
+                if attempt < MAX_RETRIES - 1:  # i.e. not the last attempt
+                    time.sleep(RETRY_DELAY)  # wait before next attempt
+                else:
+                    logging.warning(f"Failed to add edge after {MAX_RETRIES} attempts.")
 
     def update_node(self, node: GraphNode):
         """

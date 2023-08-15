@@ -102,13 +102,6 @@ class Storage:
         edge_label = determine_edge_label(to_type, from_type)
         graph.add_edges(to_nodes, from_nodes, edge_label)
 
-    def check_if_edge_exists(
-        self, from_node: GraphNode, to_node: GraphNode, edge_label: str
-    ) -> bool:
-        return self._get_graph(type(from_node)).check_if_edge_exists(
-            from_node, to_node, edge_label
-        )
-
     def traverse(self, node: GraphNode, edge_label: str) -> ListGraphNodes:
         return self._get_graph(type(node)).traverse(node, edge_label)
 
