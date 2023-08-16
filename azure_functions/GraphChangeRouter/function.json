@@ -1,0 +1,16 @@
+{
+  "scriptFile": "__init__.py",
+  "functionTimeout": "00:05:00",
+  "bindings": [
+    {
+      "type": "cosmosDBTrigger",
+      "name": "documents",
+      "direction": "in",
+      "leaseCollectionName": "GraphChangeLeases",
+      "connectionStringSetting": "feedbackassistant_DOCUMENTDB",
+      "databaseName": "feedback-assistant",
+      "collectionName": "feedback-assistant",
+      "createLeaseCollectionIfNotExists": true
+    }
+  ]
+}

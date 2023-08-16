@@ -1,0 +1,20 @@
+{
+    "azureFunctions.deploySubpath": "azure_functions",
+    "azureFunctions.scmDoBuildDuringDeployment": true,
+    "azureFunctions.projectLanguage": "Python",
+    "azureFunctions.projectRuntime": "~4",
+    "debug.internalConsoleOptions": "neverOpen",
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+    "python.formatting.provider": "none",
+    "azureFunctions.pythonVenv": ".venv",
+    "python.analysis.extraPaths": [
+        "./azure_functions"
+    ],
+    "python.testing.pytestArgs": [
+        "azure_functions"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+}

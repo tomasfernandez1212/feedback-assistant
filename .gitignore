@@ -1,3 +1,7 @@
+# Ignore scratch files
+scratch.py
+scratch/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
