@@ -7,6 +7,7 @@ from src.data import (
     AppState,
     DataPoint,
     ActionItem,
+    LLMCallLog,
     EmbeddableGraphNode,
     EmbeddableGraphNodeVar,
 )
@@ -390,3 +391,6 @@ class Storage:
                 scores.append(match["score"])
 
         return nodes, scores
+
+    def log_llm_call(self, log: LLMCallLog) -> None:
+        self.add_node(log)

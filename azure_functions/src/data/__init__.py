@@ -6,10 +6,13 @@ from src.data.topics import Topic
 from src.data.state import AppState
 from src.data.scores import Score
 from src.data.actionItems import ActionItem
+from src.data.llmCall import LLMCallLog
 
 
 # Create a Union for all Graph Nodes
-GraphNode = Union[Review, FeedbackItem, DataPoint, ActionItem, Score, Topic, AppState]
+GraphNode = Union[
+    Review, FeedbackItem, DataPoint, ActionItem, Score, Topic, AppState, LLMCallLog
+]
 GraphNodeVar = TypeVar("GraphNodeVar", bound=GraphNode)
 
 # Create a Union for all Embeddable Graph Nodes

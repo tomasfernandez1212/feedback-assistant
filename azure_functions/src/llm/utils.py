@@ -2,7 +2,13 @@ import openai
 import re
 import json
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Protocol
+from src.data.llmCall import LLMCallLog
+
+
+class LLMCallLogger(Protocol):
+    def log_llm_call(self, log: LLMCallLog) -> None:
+        ...
 
 
 def is_trailing_comma_error(json_str: str, exception: Exception) -> bool:

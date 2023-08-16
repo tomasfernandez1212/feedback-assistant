@@ -1,0 +1,23 @@
+from pydantic import BaseModel
+from uuid import uuid4
+from typing import Any
+import time
+
+
+class LLMCallLog(BaseModel):
+    prompt: str
+    response: str
+    prompt_tokens: int
+    response_tokens: int
+    total_tokens: int
+    model: str
+    temperature: float
+    id: str = ""
+    created_at: float = 0
+
+    def model_post_init(self, __context: Any) -> None:
+        if self.id == "":
+            self.id: str = f"{self.__class__.__name__}_{str(uuid4())}"
+        if self.created_at == 0:
+            self.created_at = time.time()
+        return super().model_post_init(__context)
