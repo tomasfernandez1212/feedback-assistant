@@ -101,7 +101,9 @@ class GraphConnection:
     def add_properties_to_query(
         self, query: str, node: GraphNode, updating: bool = False
     ) -> str:
-        for key, value in node.model_dump().items():
+        model_dict = node.model_dump()
+
+        for key, value in model_dict.items():
             if updating and key == "id":
                 continue  # Don't update the ID
             if isinstance(value, Enum):
@@ -118,8 +120,9 @@ class GraphConnection:
             else:
                 query += f".property('{key}', {value})"  # Assume it's a number
 
+        # Add Partition Key - We use the ID since it is a random UUID
         if not updating:
-            query += ".property('pk', 'pk')"
+            query += f".property('pk', '{model_dict['id']}')"
 
         return query
 
