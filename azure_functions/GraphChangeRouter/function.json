@@ -27,6 +27,22 @@
       "name": "datapointchangequeue",
       "queueName": "datapointchangequeue",
       "topicName": "outtopic"
+    },
+    {
+      "type": "serviceBus",
+      "direction": "out",
+      "connection": "MESSAGE_QUEUE_CONNECTION",
+      "name": "actionitemchangequeue",
+      "queueName": "actionitemchangequeue",
+      "topicName": "outtopic"
+    },
+    {
+      "type": "serviceBus",
+      "direction": "out",
+      "connection": "MESSAGE_QUEUE_CONNECTION",
+      "name": "topicchangequeue",
+      "queueName": "topicchangequeue",
+      "topicName": "outtopic"
     }
   ]
 }

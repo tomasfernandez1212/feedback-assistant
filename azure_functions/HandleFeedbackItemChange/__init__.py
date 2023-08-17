@@ -13,7 +13,7 @@ from src.llm.topics import generate_topics
 from src.llm.scores import score_data_point, ScoreType
 
 
-def main(msg: func.ServiceBusMessage) -> func.HttpResponse:
+def main(msg: func.ServiceBusMessage) -> None:
     logging.info("INIT: Unpacking Request Body")
     req_body = json.loads(msg.get_body())
     id: str = req_body.get("id")
@@ -60,4 +60,4 @@ def main(msg: func.ServiceBusMessage) -> func.HttpResponse:
         for new_topic in new_topics:
             storage.add_topic(new_topic)
 
-        return func.HttpResponse(f"Handled FeedbackItem Change.", status_code=200)
+    logging.info("DONE: Finished processing.")

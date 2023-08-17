@@ -6,7 +6,7 @@
       "name": "msg",
       "type": "serviceBusTrigger",
       "direction": "in",
-      "queueName": "FeedbackItemChangeQueue",
+      "queueName": "feedbackitemchangequeue",
       "connection": "MESSAGE_QUEUE_CONNECTION"
     }
   ]

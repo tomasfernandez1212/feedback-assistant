@@ -1,4 +1,4 @@
-import logging
+import logging, json
 
 import azure.functions as func
 from src.storage import Storage
@@ -7,9 +7,9 @@ from src.data.actionItems import ActionItem
 from src.llm.connections import infer_action_item_to_data_points_connections
 
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
+def main(msg: func.ServiceBusMessage) -> None:
     logging.info("Unpacking Request Body")
-    req_body = req.get_json()
+    req_body = json.loads(msg.get_body())
     id: str = req_body.get("id")
 
     with Storage() as storage:
@@ -28,4 +28,4 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             f"Action Item: \n\n {action_item.text} \n\nContains Data Points: {related_data_points}\n\n"
         )
 
-        return func.HttpResponse("Done")
+    logging.info("DONE: Finished processing.")
