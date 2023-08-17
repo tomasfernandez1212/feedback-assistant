@@ -1,4 +1,4 @@
-import logging
+import logging, json
 
 import azure.functions as func
 
@@ -13,9 +13,9 @@ from src.llm.topics import generate_topics
 from src.llm.scores import score_data_point, ScoreType
 
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
+def main(msg: func.ServiceBusMessage) -> func.HttpResponse:
     logging.info("INIT: Unpacking Request Body")
-    req_body = req.get_json()
+    req_body = json.loads(msg.get_body())
     id: str = req_body.get("id")
 
     with Storage() as storage:
