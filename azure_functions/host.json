@@ -7,6 +7,10 @@
         "isEnabled": true,
         "excludedTypes": "Request"
       }
+    },
+    "fileLoggingMode": "always",
+    "logLevel": {
+      "Host.Triggers.CosmosDB": "Warning"
     }
   },
   "extensionBundle": {
