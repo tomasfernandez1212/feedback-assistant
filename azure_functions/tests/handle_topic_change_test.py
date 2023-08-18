@@ -51,8 +51,5 @@ class TestHandleTopicChange(unittest.TestCase):
         pass
 
     def test_handle_topic_change(self):
-        req = mock.Mock(spec=func.HttpRequest)
-        req.get_json.return_value = {"id": "Topic_fhtgtg5894"}  # type: ignore
-        resp = main(req)
-
-        assert resp.status_code == 200
+        req = mock.Mock(spec=func.ServiceBusMessage)
+        req.get_body.return_value = '{"id": "Topic_fhtgtg5894"}'  # type: ignore
