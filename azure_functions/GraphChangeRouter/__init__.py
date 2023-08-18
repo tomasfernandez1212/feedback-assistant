@@ -2,6 +2,19 @@ import logging
 from datetime import datetime
 from azure.functions import DocumentList, Out
 
+LABELS_WITH_QUEUES = ["FeedbackItem", "DataPoint", "ActionItem", "Topic"]
+
+
+def send_to_queue(node_id: str, node_label: str, node_str: str, queue: Out[str]):
+    info = f"send message to {node_label} queue for {node_id}"
+    logging.info(f"Attempting: {info}")
+    try:
+        queue.set(node_str)  # type: ignore
+        logging.info(f"Success: {info}")
+    except Exception as e:
+        logging.info(f"Failure: {info}")
+        logging.info(e)
+
 
 def main(
     documents: DocumentList,
@@ -22,17 +35,16 @@ def main(
         logging.info(
             f"Detected change to {node_id} of type {node_label} at {current_time}"
         )
-        logging.info(f"Node: {node_str}")
 
         # Send node to appropriate queue
         if node_label == "FeedbackItem":
-            feedbackitemchangequeue.set(node_str)  # type: ignore
+            send_to_queue(node_id, node_label, node_str, feedbackitemchangequeue)  # type: ignore
         elif node_label == "DataPoint":
-            datapointchangequeue.set(node_str)  # type: ignore
+            send_to_queue(node_id, node_label, node_str, datapointchangequeue)  # type: ignore
         elif node_label == "ActionItem":
-            actionitemchangequeue.set(node_str)  # type: ignore
+            send_to_queue(node_id, node_label, node_str, actionitemchangequeue)  # type: ignore
         elif node_label == "Topic":
-            topicchangequeue.set(node_str)  # type: ignore
+            send_to_queue(node_id, node_label, node_str, topicchangequeue)  # type: ignore
         else:
             logging.info(
                 f"Node {node_id} of type {node_label} does not have a queue to send to."
