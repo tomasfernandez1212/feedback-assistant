@@ -10,7 +10,8 @@
       "connectionStringSetting": "feedbackassistant_DOCUMENTDB",
       "databaseName": "feedback-assistant",
       "collectionName": "feedback-assistant",
-      "createLeaseCollectionIfNotExists": true
+      "createLeaseCollectionIfNotExists": true,
+      "maxItemsPerInvocation": 50
     },
     {
       "type": "serviceBus",
