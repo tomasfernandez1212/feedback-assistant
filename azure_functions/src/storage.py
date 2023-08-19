@@ -219,10 +219,26 @@ class Storage:
                 self.get_observation_parent_feedback_item(observation)
             )
         self.connect_nodes([action_item], feedback_items)
-        topics: List[Topic] = []
-        for observation in observations:
-            topics.extend(self.get_observation_topics(observation))
+
+    def add_action_item_to_topics_edges(
+        self, action_item: ActionItem, topics: List[Topic]
+    ):
+        """
+        Adds edges between single action item and multiple topics.
+        This is used when an action item is created, and we search for multiple topics it is related to.
+
+        By connecting this action item to these topics, we can infer other connections which we also handle here.
+        """
+
+        # Explicit Edges
         self.connect_nodes([action_item], topics)
+
+        # Implicit Edges
+        for topic in topics:
+            feedback_items = self.get_child_feedback_items_of_topic(topic)
+            self.connect_nodes([action_item], feedback_items)
+            observations = self.get_child_observations_of_topic(topic)
+            self.connect_nodes([action_item], observations)
 
     def add_observation_to_topics_edges(
         self, observation: Observation, topics: List[Topic]
