@@ -11,7 +11,7 @@ from src.data import EMBEDDABLE_CLASS_NAMES, EmbeddableGraphNodeVar
 
 class VectorDataType(Enum):
     ActionItem = "action-items"
-    DataPoint = "data-points"
+    Observation = "observation"
     Topic = "topics"
 
 

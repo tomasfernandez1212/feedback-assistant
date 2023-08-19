@@ -2,13 +2,13 @@ import logging
 from datetime import datetime
 from azure.functions import DocumentList, Out
 
-LABELS_WITH_QUEUES = ["FeedbackItem", "DataPoint", "ActionItem", "Topic"]
+LABELS_WITH_QUEUES = ["FeedbackItem", "Observation", "ActionItem", "Topic"]
 
 
 def main(
     documents: DocumentList,
     feedbackitemchangequeue: Out[str],
-    datapointchangequeue: Out[str],
+    observationchangequeue: Out[str],
     actionitemchangequeue: Out[str],
     topicchangequeue: Out[str],
 ):
@@ -32,8 +32,8 @@ def main(
     # Send node to appropriate queue
     if node_label == "FeedbackItem":
         feedbackitemchangequeue.set(node_str)  # type: ignore
-    elif node_label == "DataPoint":
-        datapointchangequeue.set(node_str)  # type: ignore
+    elif node_label == "Observation":
+        observationchangequeue.set(node_str)  # type: ignore
     elif node_label == "ActionItem":
         actionitemchangequeue.set(node_str)  # type: ignore
     elif node_label == "Topic":

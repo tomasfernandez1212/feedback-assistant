@@ -1,6 +1,6 @@
 from typing import List
 import openai
-from src.data.dataPoint import DataPoint
+from src.data.observations import Observation
 from src.data.actionItems import ActionItem
 
 from src.llm.utils import unpack_function_call_arguments
@@ -8,15 +8,15 @@ from src.llm.utils import unpack_function_call_arguments
 
 def generate_action_items(
     feedback_item: str,
-    data_points: List[DataPoint],
+    observations: List[Observation],
     existing_action_items: List[ActionItem],
 ) -> List[ActionItem]:
     """
-    Given a feedback item, a list of data points, and a list of existing action items, return a list of new action items to add.
+    Given a feedback item, a list of observations, and a list of existing action items, return a list of new action items to add.
     """
-    numbered_data_points = ""
-    for i, data_point in enumerate(data_points):
-        numbered_data_points += f"{i}. {data_point.text}\n"
+    numbered_observations = ""
+    for i, observation in enumerate(observations):
+        numbered_observations += f"{i}. {observation.text}\n"
 
     numbered_existing_action_items = ""
     for i, action_item_text in enumerate(existing_action_items):
@@ -31,7 +31,7 @@ def generate_action_items(
             },
             {
                 "role": "user",
-                "content": f"Here is a customer's feedback:\n\n{feedback_item}\n\nFrom this feedback, we have the following takeaways:\n\n{numbered_data_points}\n\nHere are the existing action items we have in our backlog:\n\n{numbered_existing_action_items}\n\nWhat action items to we need to add to our backlog to address the takeaways. Don't add action items if the ones in the backlog already address the issue.",
+                "content": f"Here is a customer's feedback:\n\n{feedback_item}\n\nFrom this feedback, we have the following takeaways:\n\n{numbered_observations}\n\nHere are the existing action items we have in our backlog:\n\n{numbered_existing_action_items}\n\nWhat action items to we need to add to our backlog to address the takeaways. Don't add action items if the ones in the backlog already address the issue.",
             },
         ],
         functions=[

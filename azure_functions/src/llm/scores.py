@@ -85,8 +85,8 @@ def generate_score_properties_and_required(
     return (properties, required)
 
 
-def score_data_point(
-    data_point: str, feedback_item: str, score_types: List[ScoreType]
+def score_observation(
+    observation: str, feedback_item: str, score_types: List[ScoreType]
 ) -> List[Score]:
     model_name = "gpt-3.5-turbo-0613"
 
@@ -97,7 +97,7 @@ def score_data_point(
         },
         {
             "role": "user",
-            "content": f"""Here is something a customer said about their experience with us:\n{feedback_item}\n\nFrom this feedback, we have the following takeaway:\n{data_point}\n\nFrom that takeaway, report the customer's scores on a continuous scale.""",
+            "content": f"""Here is something a customer said about their experience with us:\n{feedback_item}\n\nFrom this feedback, we have the following takeaway:\n{observation}\n\nFrom that takeaway, report the customer's scores on a continuous scale.""",
         },
     ]
 

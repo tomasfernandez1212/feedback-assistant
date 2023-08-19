@@ -1,28 +1,28 @@
 from typing import Dict, List
 import openai
-from src.data import DataPoint, ActionItem, Topic
+from src.data import Observation, ActionItem, Topic
 from src.llm.utils import unpack_function_call_arguments
 
 
-def infer_action_items_to_data_points_connections(
+def infer_action_items_to_observations_connections(
     feedback_item: str,
-    data_points: List[DataPoint],
+    observations: List[Observation],
     action_items: List[ActionItem],
 ) -> Dict[int, List[int]]:
     """
-    Given a feedback item as context, a list of data points, and a list of action items, infer which action items address which data points.
+    Given a feedback item as context, a list of observations, and a list of action items, infer which action items address which observations.
     """
 
-    # Exit if there are no data points or action items
-    if len(data_points) == 0:
+    # Exit if there are no observations or action items
+    if len(observations) == 0:
         return {}
     if len(action_items) == 0:
         return {}
 
-    # Create a numbered list of data points and action items
-    numbered_data_points = ""
-    for i, data_point in enumerate(data_points):
-        numbered_data_points += f"{i}. {data_point.text}\n"
+    # Create a numbered list of observations and action items
+    numbered_observations = ""
+    for i, observation in enumerate(observations):
+        numbered_observations += f"{i}. {observation.text}\n"
 
     numbered_action_items = ""
     for i, action_item in enumerate(action_items):
@@ -37,7 +37,7 @@ def infer_action_items_to_data_points_connections(
             },
             {
                 "role": "user",
-                "content": f"Here is a customer's feedback:\n\n{feedback_item}\n\nFrom this feedback, we have the following takeaways:\n\n{numbered_data_points}\n\nHere are the action items we have in our backlog:\n\n{numbered_action_items}\n\nFor each action item, report which takeaway(s) the action item helps to address.",
+                "content": f"Here is a customer's feedback:\n\n{feedback_item}\n\nFrom this feedback, we have the following takeaways:\n\n{numbered_observations}\n\nHere are the action items we have in our backlog:\n\n{numbered_action_items}\n\nFor each action item, report which takeaway(s) the action item helps to address.",
             },
         ],
         functions=[
@@ -57,13 +57,13 @@ def infer_action_items_to_data_points_connections(
                                         "type": "integer",
                                         "description": "The id of the action item. For example: 0",
                                     },
-                                    "data_point_ids": {
+                                    "observation_ids": {
                                         "type": "array",
-                                        "description": "A list of data point ids. For example: [0, 1]",
+                                        "description": "A list of observation ids. For example: [0, 1]",
                                         "items": {"type": "integer"},
                                     },
                                 },
-                                "required": ["action_item_id", "data_point_ids"],
+                                "required": ["action_item_id", "observation_ids"],
                             },
                         }
                     },
@@ -76,22 +76,22 @@ def infer_action_items_to_data_points_connections(
 
     relationships = unpack_function_call_arguments(response)["relationships"]  # type: ignore
 
-    # Convert to mapping of action item index to data point indices
-    action_item_to_data_points: Dict[int, List[int]] = {}
+    # Convert to mapping of action item index to observation indices
+    action_item_to_observations: Dict[int, List[int]] = {}
     for relationship in relationships:
-        action_item_to_data_points[relationship["action_item_id"]] = relationship[
-            "data_point_ids"
+        action_item_to_observations[relationship["action_item_id"]] = relationship[
+            "observation_ids"
         ]
 
-    return action_item_to_data_points  # type: ignore
+    return action_item_to_observations  # type: ignore
 
 
-def infer_data_point_to_action_items_connections(
-    data_point: DataPoint,
+def infer_observation_to_action_items_connections(
+    observation: Observation,
     action_items: List[ActionItem],
 ) -> List[ActionItem]:
     """
-    Given a single data point, and a list of action items, infer which subset of action items address the data point.
+    Given a single observation, and a list of action items, infer which subset of action items address the observation.
     """
 
     # Exit if there are no action items
@@ -112,7 +112,7 @@ def infer_data_point_to_action_items_connections(
             },
             {
                 "role": "user",
-                "content": f"We have the following takeaway from a customer review:\n\n{data_point.text}\n\nFor each of the following action items, report if the action item directly addresses the takeaway above:\n\n{numbered_action_items}",
+                "content": f"We have the following takeaway from a customer review:\n\n{observation.text}\n\nFor each of the following action items, report if the action item directly addresses the takeaway above:\n\n{numbered_action_items}",
             },
         ],
         functions=[
@@ -140,7 +140,7 @@ def infer_data_point_to_action_items_connections(
 
     booleans = unpack_function_call_arguments(response)["addresses"]  # type: ignore
 
-    # Convert to mapping of action item index to data point indices
+    # Convert to mapping of action item index to observation indices
     related_action_items: List[ActionItem] = []
     for i, boolean in enumerate(booleans):
         if boolean:
@@ -149,12 +149,12 @@ def infer_data_point_to_action_items_connections(
     return related_action_items  # type: ignore
 
 
-def infer_data_point_to_topics_connections(
-    data_point: DataPoint,
+def infer_observation_to_topics_connections(
+    observation: Observation,
     topics: List[Topic],
 ) -> List[Topic]:
     """
-    Given a single data point, and a list of topics, infer which subset of topics the data point belongs to.
+    Given a single observation, and a list of topics, infer which subset of topics the observation belongs to.
     """
 
     # Exit if there are no topics
@@ -174,7 +174,7 @@ def infer_data_point_to_topics_connections(
             },
             {
                 "role": "user",
-                "content": f"We have the following takeaway from a customer review:\n\n{data_point.text}\n\nFor each of the following topics, report if the takeaway above belongs to the topic:\n\n{numbered_topics}",
+                "content": f"We have the following takeaway from a customer review:\n\n{observation.text}\n\nFor each of the following topics, report if the takeaway above belongs to the topic:\n\n{numbered_topics}",
             },
         ],
         functions=[
@@ -211,21 +211,21 @@ def infer_data_point_to_topics_connections(
     return related_topics  # type: ignore
 
 
-def infer_topic_to_data_points_connections(
+def infer_topic_to_observations_connections(
     topic: Topic,
-    data_points: List[DataPoint],
-) -> List[DataPoint]:
+    observations: List[Observation],
+) -> List[Observation]:
     """
-    Given a single topic, and a list of data points, infer which subset of data points belong to the topic.
+    Given a single topic, and a list of observations, infer which subset of observations belong to the topic.
     """
 
-    # Exit if there are no data points
-    if len(data_points) == 0:
+    # Exit if there are no observations
+    if len(observations) == 0:
         return []
 
-    numbered_data_points = ""
-    for i, data_point in enumerate(data_points):
-        numbered_data_points += f"{i}. {data_point.text}\n"
+    numbered_observations = ""
+    for i, observation in enumerate(observations):
+        numbered_observations += f"{i}. {observation.text}\n"
 
     response = openai.ChatCompletion.create(  # type: ignore
         model="gpt-3.5-turbo-0613",
@@ -237,7 +237,7 @@ def infer_topic_to_data_points_connections(
             },
             {
                 "role": "user",
-                "content": f"For each of the following takeaways, report if the takeaway is talking about the topic '{topic.text}':\n\n{numbered_data_points}",
+                "content": f"For each of the following takeaways, report if the takeaway is talking about the topic '{topic.text}':\n\n{numbered_observations}",
             },
         ],
         functions=[
@@ -265,30 +265,30 @@ def infer_topic_to_data_points_connections(
 
     booleans = unpack_function_call_arguments(response)["belongs_to"]  # type: ignore
 
-    # Convert the booleans to a list of data points
-    related_data_points: List[DataPoint] = []
+    # Convert the booleans to a list of observations
+    related_observations: List[Observation] = []
     for i, boolean in enumerate(booleans):
         if boolean:
-            related_data_points.append(data_points[i])
+            related_observations.append(observations[i])
 
-    return related_data_points  # type: ignore
+    return related_observations  # type: ignore
 
 
-def infer_action_item_to_data_points_connections(
+def infer_action_item_to_observations_connections(
     action_item: ActionItem,
-    data_points: List[DataPoint],
-) -> List[DataPoint]:
+    observations: List[Observation],
+) -> List[Observation]:
     """
-    Given a single action_item, and a list of data points, infer which subset of data points are addressed by the action item.
+    Given a single action_item, and a list of observations, infer which subset of observations are addressed by the action item.
     """
 
-    # Exit if there are no data points
-    if len(data_points) == 0:
+    # Exit if there are no observations
+    if len(observations) == 0:
         return []
 
-    numbered_data_points = ""
-    for i, data_point in enumerate(data_points):
-        numbered_data_points += f"{i}. {data_point.text}\n"
+    numbered_observations = ""
+    for i, observation in enumerate(observations):
+        numbered_observations += f"{i}. {observation.text}\n"
 
     response = openai.ChatCompletion.create(  # type: ignore
         model="gpt-3.5-turbo-0613",
@@ -300,7 +300,7 @@ def infer_action_item_to_data_points_connections(
             },
             {
                 "role": "user",
-                "content": f"For each of the following takeaways, report if the takeaway can be directly addressed by this action item: '{action_item.text}':\n\n{numbered_data_points}",
+                "content": f"For each of the following takeaways, report if the takeaway can be directly addressed by this action item: '{action_item.text}':\n\n{numbered_observations}",
             },
         ],
         functions=[
@@ -328,10 +328,10 @@ def infer_action_item_to_data_points_connections(
 
     booleans = unpack_function_call_arguments(response)["addressed"]  # type: ignore
 
-    # Convert the booleans to a list of data points
-    related_data_points: List[DataPoint] = []
+    # Convert the booleans to a list of observations
+    related_observations: List[Observation] = []
     for i, boolean in enumerate(booleans):
         if boolean:
-            related_data_points.append(data_points[i])
+            related_observations.append(observations[i])
 
-    return related_data_points  # type: ignore
+    return related_observations  # type: ignore
