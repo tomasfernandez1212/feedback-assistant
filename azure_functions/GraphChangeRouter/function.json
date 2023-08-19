@@ -11,7 +11,7 @@
       "databaseName": "feedback-assistant",
       "collectionName": "feedback-assistant",
       "createLeaseCollectionIfNotExists": true,
-      "maxItemsPerInvocation": 50
+      "maxItemsPerInvocation": 1
     },
     {
       "type": "serviceBus",
