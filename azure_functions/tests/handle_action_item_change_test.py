@@ -5,7 +5,7 @@ from unittest import mock
 
 from HandleActionItemChange import main
 from src.storage import Storage
-from src.data.dataPoint import DataPoint
+from src.data.observations import Observation
 from src.data.feedbackItems import FeedbackItem
 from src.data.actionItems import ActionItem
 from src.data.topics import Topic
@@ -25,13 +25,13 @@ class TestHandleActionItemChange(unittest.TestCase):
                 text="I loved the ambiance, but the waitress could have been more attentive.",
                 text_written_at=iso_to_unix_timestamp("2023-07-25T00:00:00.000Z"),
             )
-            data_point_1 = DataPoint(
+            observation_1 = Observation(
                 text="The customer loved the ambiance.",
-                id="DataPoint_efr894",
+                id="Observation_efr894",
             )
-            data_point_2 = DataPoint(
+            observation_2 = Observation(
                 text="The customer found the waitress inattentive.",
-                id="DataPoint_ergvg",
+                id="Observation_ergvg",
             )
             topic = Topic(
                 text="Service",
@@ -42,10 +42,10 @@ class TestHandleActionItemChange(unittest.TestCase):
                 id="ActionItem_rfhwei",
             )
             storage.add_feedback_item_and_source(feedback_item, review)
-            storage.add_data_point_for_feedback_item(data_point_1, feedback_item)
-            storage.add_data_point_for_feedback_item(data_point_2, feedback_item)
+            storage.add_observation_for_feedback_item(observation_1, feedback_item)
+            storage.add_observation_for_feedback_item(observation_2, feedback_item)
             storage.add_topic(topic)
-            storage.connect_nodes([topic], [data_point_2])
+            storage.connect_nodes([topic], [observation_2])
             storage.add_action_item(action_item)
 
     def teardown_method(self, method: Callable[[], Any]):

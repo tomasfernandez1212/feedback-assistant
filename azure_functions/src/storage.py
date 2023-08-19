@@ -5,7 +5,7 @@ from src.data import (
     Review,
     Topic,
     AppState,
-    DataPoint,
+    Observation,
     ActionItem,
     EmbeddableGraphNode,
     EmbeddableGraphNodeVar,
@@ -133,47 +133,49 @@ class Storage:
         self.add_node(feedback_item)
         self.connect_nodes([feedback_item], [source])
 
-    def add_data_point_for_feedback_item(
-        self, data_point: DataPoint, feedback_item: FeedbackItem
+    def add_observation_for_feedback_item(
+        self, observation: Observation, feedback_item: FeedbackItem
     ):
         """
-        Adds data point as node in graph, but also adds edges between feedback item and data point.
+        Adds observation as node in graph, but also adds edges between feedback item and observation.
 
-        Also embeds the data point and adds to vectorstore.
+        Also embeds the observation and adds to vectorstore.
         """
 
-        self.add_node(data_point)
-        self.connect_nodes([feedback_item], [data_point])
-        self.embed_and_store(data_point)
+        self.add_node(observation)
+        self.connect_nodes([feedback_item], [observation])
+        self.embed_and_store(observation)
 
-    def get_data_point_parent_feedback_item(
-        self, data_point: DataPoint
+    def get_observation_parent_feedback_item(
+        self, observation: Observation
     ) -> FeedbackItem:
         """
-        Gets the feedback item that the data point is a child of.
+        Gets the feedback item that the observation is a child of.
         """
         feedback_items = self.traverse(
-            data_point, determine_edge_label(DataPoint, FeedbackItem)
+            observation, determine_edge_label(Observation, FeedbackItem)
         )
         if len(feedback_items) != 1:
             raise Exception(
-                f"DataPoint {data_point.id} does not have exactly one parent feedback item. Count: {len(feedback_items)}"
+                f"Observation {observation.id} does not have exactly one parent feedback item. Count: {len(feedback_items)}"
             )
         return feedback_items[0]  # type: ignore
 
-    def get_data_point_topics(self, data_point: DataPoint) -> List[Topic]:
+    def get_observation_topics(self, observation: Observation) -> List[Topic]:
         """
-        Gets the topics that the data point belongs to.
+        Gets the topics that the observation belongs to.
         """
-        topics = self.traverse(data_point, determine_edge_label(DataPoint, Topic))
+        topics = self.traverse(observation, determine_edge_label(Observation, Topic))
         return topics  # type: ignore
 
-    def get_data_point_action_items(self, data_point: DataPoint) -> List[ActionItem]:
+    def get_observation_action_items(
+        self, observation: Observation
+    ) -> List[ActionItem]:
         """
-        Gets the action items that the data point belongs to.
+        Gets the action items that the observation belongs to.
         """
         action_items = self.traverse(
-            data_point, determine_edge_label(DataPoint, ActionItem)
+            observation, determine_edge_label(Observation, ActionItem)
         )
         return action_items  # type: ignore
 
@@ -191,88 +193,92 @@ class Storage:
         self.add_node(action_item)
         self.embed_and_store(action_item)
 
-    def add_data_point_to_action_items_edges(
-        self, data_point: DataPoint, action_items: List[ActionItem]
+    def add_observation_to_action_items_edges(
+        self, observation: Observation, action_items: List[ActionItem]
     ):
         """
-        Adds edges between single data point and multiple action items.
-        This is used when a data point is created, and we search for multiple action items it is related to.
+        Adds edges between single observation and multiple action items.
+        This is used when a observation is created, and we search for multiple action items it is related to.
 
-        By connecting this data point to these action items, we can infer other connections which we also handle here.
+        By connecting this observation to these action items, we can infer other connections which we also handle here.
         """
 
         # Explicit Edges
-        self.connect_nodes([data_point], action_items)
+        self.connect_nodes([observation], action_items)
 
         # Implicit Edges
-        feedback_item = self.get_data_point_parent_feedback_item(data_point)
+        feedback_item = self.get_observation_parent_feedback_item(observation)
         self.connect_nodes(action_items, [feedback_item])
-        topics = self.get_data_point_topics(data_point)
+        topics = self.get_observation_topics(observation)
         self.connect_nodes(action_items, topics)
 
-    def add_action_item_to_data_points_edges(
-        self, action_item: ActionItem, data_points: List[DataPoint]
+    def add_action_item_to_observations_edges(
+        self, action_item: ActionItem, observations: List[Observation]
     ):
         """
-        Adds edges between single action item and multiple data points.
-        This is used when an action item is created, and we search for multiple data points it is related to.
+        Adds edges between single action item and multiple observations.
+        This is used when an action item is created, and we search for multiple observations it is related to.
 
-        By connecting this action item to these data points, we can infer other connections which we also handle here.
+        By connecting this action item to these observations, we can infer other connections which we also handle here.
         """
 
         # Explicit Edges
-        self.connect_nodes([action_item], data_points)
+        self.connect_nodes([action_item], observations)
 
         # Implicit Edges
         feedback_items: List[FeedbackItem] = []
-        for data_point in data_points:
-            feedback_items.append(self.get_data_point_parent_feedback_item(data_point))
+        for observation in observations:
+            feedback_items.append(
+                self.get_observation_parent_feedback_item(observation)
+            )
         self.connect_nodes([action_item], feedback_items)
         topics: List[Topic] = []
-        for data_point in data_points:
-            topics.extend(self.get_data_point_topics(data_point))
+        for observation in observations:
+            topics.extend(self.get_observation_topics(observation))
         self.connect_nodes([action_item], topics)
 
-    def add_data_point_to_topics_edges(
-        self, data_point: DataPoint, topics: List[Topic]
+    def add_observation_to_topics_edges(
+        self, observation: Observation, topics: List[Topic]
     ):
         """
-        Adds edges between single data point and multiple topics.
-        This is used when a data point is created, and we search for multiple topics it is related to.
+        Adds edges between single observation and multiple topics.
+        This is used when a observation is created, and we search for multiple topics it is related to.
 
-        By connecting this data point to these topics, we can infer other connections which we also handle here.
+        By connecting this observation to these topics, we can infer other connections which we also handle here.
         """
 
         # Explicit Edges
-        self.connect_nodes([data_point], topics)
+        self.connect_nodes([observation], topics)
 
         # Implicit Edges
-        feedback_item = self.get_data_point_parent_feedback_item(data_point)
+        feedback_item = self.get_observation_parent_feedback_item(observation)
         self.connect_nodes(topics, [feedback_item])
-        action_items = self.get_data_point_action_items(data_point)
+        action_items = self.get_observation_action_items(observation)
         self.connect_nodes(topics, action_items)
 
-    def add_topic_to_data_points_edges(
-        self, topic: Topic, data_points: List[DataPoint]
+    def add_topic_to_observations_edges(
+        self, topic: Topic, observations: List[Observation]
     ):
         """
-        Adds edges between single topic and multiple data points.
-        This is used when a topic is created, and we search for multiple data points it is related to.
+        Adds edges between single topic and multiple observations.
+        This is used when a topic is created, and we search for multiple observations it is related to.
 
-        By connecting this topic to these data points, we can infer other connections which we also handle here.
+        By connecting this topic to these observations, we can infer other connections which we also handle here.
         """
 
         # Explicit Edges
-        self.connect_nodes([topic], data_points)
+        self.connect_nodes([topic], observations)
 
         # Implicit Edges
         feedback_items: List[FeedbackItem] = []
-        for data_point in data_points:
-            feedback_items.append(self.get_data_point_parent_feedback_item(data_point))
+        for observation in observations:
+            feedback_items.append(
+                self.get_observation_parent_feedback_item(observation)
+            )
         self.connect_nodes([topic], feedback_items)
         action_items: List[ActionItem] = []
-        for data_point in data_points:
-            action_items.extend(self.get_data_point_action_items(data_point))
+        for observation in observations:
+            action_items.extend(self.get_observation_action_items(observation))
         self.connect_nodes([topic], action_items)
 
     def add_topic(self, topic: Topic):
@@ -343,7 +349,7 @@ class Storage:
         aggregation: AggregationMethod,
     ) -> List[Dict[str, Any]]:
         # Form query
-        query = f"g.V().hasLabel({for_node.__class__.__name__}).as('x').out('addresses').hasLabel('DataPoint').out('scored_by').has('name', '{score_name.value}').values('score').group().by(select('x')).by({aggregation.value}()).unfold()"
+        query = f"g.V().hasLabel({for_node.__class__.__name__}).as('x').out('addresses').hasLabel('Observation').out('scored_by').has('name', '{score_name.value}').values('score').group().by(select('x')).by({aggregation.value}()).unfold()"
 
         # Submit query
         result: List[Dict[str, float]] = self._get_graph(type(for_node)).submit_query(

@@ -5,7 +5,7 @@ from unittest import mock
 
 from HandleTopicChange import main
 from src.storage import Storage
-from src.data.dataPoint import DataPoint
+from src.data.observations import Observation
 from src.data.feedbackItems import FeedbackItem
 from src.data.actionItems import ActionItem
 from src.data.topics import Topic
@@ -25,13 +25,13 @@ class TestHandleTopicChange(unittest.TestCase):
                 text="I loved the apple tart. However, my table was not clean.",
                 text_written_at=iso_to_unix_timestamp("2023-07-25T00:00:00.000Z"),
             )
-            data_point_1 = DataPoint(
+            observation_1 = Observation(
                 text="The customer loved the apple tart.",
-                id="DataPoint_fhtgtg5894",
+                id="Observation_fhtgtg5894",
             )
-            data_point_2 = DataPoint(
+            observation_2 = Observation(
                 text="The customer found the table dirty.",
-                id="DataPoint_fgw4g",
+                id="Observation_fgw4g",
             )
             topic = Topic(
                 text="Cleanliness",
@@ -41,11 +41,11 @@ class TestHandleTopicChange(unittest.TestCase):
                 text="Clean the tables.",
             )
             storage.add_feedback_item_and_source(feedback_item, review)
-            storage.add_data_point_for_feedback_item(data_point_1, feedback_item)
-            storage.add_data_point_for_feedback_item(data_point_2, feedback_item)
+            storage.add_observation_for_feedback_item(observation_1, feedback_item)
+            storage.add_observation_for_feedback_item(observation_2, feedback_item)
             storage.add_topic(topic)
             storage.add_action_item(action_item)
-            storage.connect_nodes([action_item], [data_point_2])
+            storage.connect_nodes([action_item], [observation_2])
 
     def teardown_method(self, method: Callable[[], Any]):
         pass
@@ -53,3 +53,4 @@ class TestHandleTopicChange(unittest.TestCase):
     def test_handle_topic_change(self):
         req = mock.Mock(spec=func.ServiceBusMessage)
         req.get_body.return_value = '{"id": "Topic_fhtgtg5894"}'  # type: ignore
+        main(req)
