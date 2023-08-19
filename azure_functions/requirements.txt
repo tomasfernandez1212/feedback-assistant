@@ -14,3 +14,4 @@ hdbscan
 ipykernel 
 numpy
 pinecone-client
+azure-servicebus

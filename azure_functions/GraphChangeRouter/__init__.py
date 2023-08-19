@@ -1,46 +1,46 @@
 import logging
 from datetime import datetime
-import os
-import json
-import threading
-import requests
+from azure.functions import DocumentList, Out
 
-from azure.functions import DocumentList
-
-FUNCTION_APP_NAME = "fa-function-app"
+LABELS_WITH_QUEUES = ["FeedbackItem", "DataPoint", "ActionItem", "Topic"]
 
 
-def call_function(function_name: str, body: dict[str, str]):
-    # Get Function Key
-    function_key = os.environ[f"{function_name}_KEY"]
-    if function_key == "":
-        raise Exception(f"{function_name}_KEY is not set")
-
-    # Create URL
-    logging.info(f"Calling {function_name}.")
-    url = f"https://{FUNCTION_APP_NAME}.azurewebsites.net/api/{function_name}?code={function_key}"
-
-    # This starts the request, but doesn't wait for the response
-    threading.Thread(target=requests.post, args=(url,), kwargs={"json": body}).start()
-
-
-def main(documents: DocumentList):
+def main(
+    documents: DocumentList,
+    feedbackitemchangequeue: Out[str],
+    datapointchangequeue: Out[str],
+    actionitemchangequeue: Out[str],
+    topicchangequeue: Out[str],
+):
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    logging.info(f"Python function started at {current_time}")
 
-    for node in documents:  # type: ignore
-        id = node["id"]  # type: ignore
-        label = node["label"]  # type: ignore
+    if len(documents) > 1:
+        logging.error(
+            "More than one document was passed to the function. The output binding to the azure service bus queue can only send one message at a time. Set the maxItemsPerInvocation to 1 in the input binding."
+        )
+        return
 
-        logging.info(f"Detected change to {id} of type {label} at {current_time}")
-        logging.info(f"Node: {node.to_json()}")  # type: ignore
+    node = documents[0]  # type: ignore
 
-        if label == "FeedbackItem":
-            call_function("HandleFeedbackItemChange", json.loads(node.to_json()))  # type: ignore
-        elif label == "DataPoint":
-            call_function("HandleDataPointChange", json.loads(node.to_json()))  # type: ignore
-        elif label == "Topic":
-            call_function("HandleTopicChange", json.loads(node.to_json()))  # type: ignore
-        elif label == "ActionItem":
-            call_function("HandleActionItemChange", json.loads(node.to_json()))  # type: ignore
-        else:
-            logging.info(f"Unknown node type: {label}")
+    node_id: str = node["id"]  # type: ignore
+    node_label: str = node["label"]  # type: ignore
+    node_str: str = node.to_json()  # type: ignore
+
+    logging.info(f"Detected change to {node_id} of type {node_label} at {current_time}")
+
+    # Send node to appropriate queue
+    if node_label == "FeedbackItem":
+        feedbackitemchangequeue.set(node_str)  # type: ignore
+    elif node_label == "DataPoint":
+        datapointchangequeue.set(node_str)  # type: ignore
+    elif node_label == "ActionItem":
+        actionitemchangequeue.set(node_str)  # type: ignore
+    elif node_label == "Topic":
+        topicchangequeue.set(node_str)  # type: ignore
+    else:
+        logging.info(
+            f"Node {node_id} of type {node_label} does not have a queue to send to."
+        )
+
+    logging.info(f"Python function finished.")

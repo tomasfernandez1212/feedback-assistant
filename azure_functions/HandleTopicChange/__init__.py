@@ -1,4 +1,4 @@
-import logging
+import logging, json
 
 import azure.functions as func
 from src.storage import Storage
@@ -7,9 +7,9 @@ from src.data.topics import Topic
 from src.llm.connections import infer_topic_to_data_points_connections
 
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("Unpacking Request Body")
-    req_body = req.get_json()
+def main(msg: func.ServiceBusMessage) -> None:
+    logging.info("INIT: Unpacking Request Body")
+    req_body = json.loads(msg.get_body())
     id: str = req_body.get("id")
 
     with Storage() as storage:
@@ -28,4 +28,4 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             f"Topic: \n\n {topic.text} \n\nContains Data Points: {related_data_points}\n\n"
         )
 
-        return func.HttpResponse("Done")
+    logging.info("DONE: Finished processing.")

@@ -44,8 +44,6 @@ class TestHandleDataPointChange(unittest.TestCase):
         pass
 
     def test_handle_related_data_point_change(self):
-        req = mock.Mock(spec=func.HttpRequest)
-        req.get_json.return_value = {"id": "DataPoint_fh5894"}  # type: ignore
-        resp = main(req)
-
-        assert resp.status_code == 200
+        req = mock.Mock(spec=func.ServiceBusMessage)
+        req.get_body.return_value = '{"id": "DataPoint_fh5894"}'  # type: ignore
+        main(req)
