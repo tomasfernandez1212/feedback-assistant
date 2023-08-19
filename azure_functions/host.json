@@ -7,10 +7,18 @@
         "isEnabled": true,
         "excludedTypes": "Request"
       }
+    },
+    "fileLoggingMode": "always",
+    "logLevel": {
+      "Host.Triggers.CosmosDB": "Warning"
     }
   },
   "extensionBundle": {
     "id": "Microsoft.Azure.Functions.ExtensionBundle",
     "version": "[3.*, 4.0.0)"
+  },
+  "concurrency": {
+    "dynamicConcurrencyEnabled": true,
+    "snapshotPersistenceEnabled": true
   }
 }

@@ -36,9 +36,7 @@ class TestFeedbackItemChange(unittest.TestCase):
         pass
 
     def test_handle_feedback_item_change(self):
-        req = mock.Mock(spec=func.HttpRequest)
-        req.get_json.return_value = {"id": "feedback_item_id"}  # type: ignore
+        req = mock.Mock(spec=func.ServiceBusMessage)
+        req.get_body.return_value = '{"id": "feedback_item_id"}'  # type: ignore
 
-        resp = main(req)
-
-        assert resp.status_code == 200
+        main(req)

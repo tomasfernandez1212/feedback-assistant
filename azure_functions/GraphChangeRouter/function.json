@@ -10,7 +10,40 @@
       "connectionStringSetting": "feedbackassistant_DOCUMENTDB",
       "databaseName": "feedback-assistant",
       "collectionName": "feedback-assistant",
-      "createLeaseCollectionIfNotExists": true
+      "createLeaseCollectionIfNotExists": true,
+      "maxItemsPerInvocation": 1
+    },
+    {
+      "type": "serviceBus",
+      "direction": "out",
+      "connection": "MESSAGE_QUEUE_CONNECTION",
+      "name": "feedbackitemchangequeue",
+      "queueName": "feedbackitemchangequeue",
+      "topicName": "outtopic"
+    },
+    {
+      "type": "serviceBus",
+      "direction": "out",
+      "connection": "MESSAGE_QUEUE_CONNECTION",
+      "name": "datapointchangequeue",
+      "queueName": "datapointchangequeue",
+      "topicName": "outtopic"
+    },
+    {
+      "type": "serviceBus",
+      "direction": "out",
+      "connection": "MESSAGE_QUEUE_CONNECTION",
+      "name": "actionitemchangequeue",
+      "queueName": "actionitemchangequeue",
+      "topicName": "outtopic"
+    },
+    {
+      "type": "serviceBus",
+      "direction": "out",
+      "connection": "MESSAGE_QUEUE_CONNECTION",
+      "name": "topicchangequeue",
+      "queueName": "topicchangequeue",
+      "topicName": "outtopic"
     }
   ]
 }

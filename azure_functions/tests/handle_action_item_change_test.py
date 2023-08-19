@@ -51,9 +51,7 @@ class TestHandleActionItemChange(unittest.TestCase):
     def teardown_method(self, method: Callable[[], Any]):
         pass
 
-    def test_handle_topic_change(self):
-        req = mock.Mock(spec=func.HttpRequest)
-        req.get_json.return_value = {"id": "ActionItem_rfhwei"}  # type: ignore
-        resp = main(req)
-
-        assert resp.status_code == 200
+    def test_handle_action_item_change(self):
+        req = mock.Mock(spec=func.ServiceBusMessage)
+        req.get_body.return_value = '{"id": "ActionItem_rfhwei"}'  # type: ignore
+        main(req)
