@@ -1,10 +1,10 @@
 from typing import List
 import openai
 from src.llm.utils import unpack_function_call_arguments
-from src.data.dataPoint import DataPoint
+from src.data.observations import Observation
 
 
-def generate_data_points(text: str) -> list[DataPoint]:
+def generate_observations(text: str) -> list[Observation]:
     response = openai.ChatCompletion.create(  # type: ignore
         model="gpt-3.5-turbo-0613",
         messages=[
@@ -17,7 +17,7 @@ def generate_data_points(text: str) -> list[DataPoint]:
 
                 You would identify: ["The customer visited our location on Divisadero.", "The exterior of the restaurant may seem modest or unassuming, as described as 'hole-in-the-wall'.", "The restaurant has a back patio equipped with heaters.", "The ordering system is more casual, with customers placing orders at the front and given a number to wait for their food.", "The staff of the restaurant made a positive impression on the customer, being described as 'sweet' and 'helpful'.", "The restaurant is not suitable for larger groups due to the lack of large tables.", "The food offered is fresh and healthy, including options like salads and gyros.", "The customer found the gyro hard to eat and not particularly flavorful, specifically mentioning a white sweet potato gyro.", "The restaurant serves high-quality fries that are crispy on the outside and soft on the inside.", "The restaurant offers a dessert option that involves Baklava Crumbles on frozen Greek yogurt.", "The customer was highly impressed with the Baklava Crumbles on frozen Greek yogurt, describing it as 'FIRE' and expressing an eagerness to revisit the restaurant for this dessert.", "The customer found the combination of tart yogurt and sweet baklava to be very satisfying."]
 
-                The goal is to infer data points from customers' experiences.""",
+                The goal is to infer observations from customers' experiences.""",
             },
             {
                 "role": "user",
@@ -31,21 +31,21 @@ def generate_data_points(text: str) -> list[DataPoint]:
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "data_points": {
+                        "observations": {
                             "type": "array",
                             "description": "A list of interpretations.",
                             "items": {"type": "string"},
                         },
                     },
                 },
-                "required": ["data_points"],
+                "required": ["observations"],
             }
         ],
         function_call={"name": "report_interpretation"},
     )
 
-    list_of_data_point_texts: List[str] = unpack_function_call_arguments(response)["data_points"]  # type: ignore
-    list_of_data_points: List[DataPoint] = []
-    for data_point_text in list_of_data_point_texts:
-        list_of_data_points.append(DataPoint(text=data_point_text))
-    return list_of_data_points
+    list_of_observation_texts: List[str] = unpack_function_call_arguments(response)["observations"]  # type: ignore
+    list_of_observations: List[Observation] = []
+    for observation_text in list_of_observation_texts:
+        list_of_observations.append(Observation(text=observation_text))
+    return list_of_observations

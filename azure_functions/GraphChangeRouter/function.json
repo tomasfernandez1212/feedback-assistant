@@ -25,8 +25,8 @@
       "type": "serviceBus",
       "direction": "out",
       "connection": "MESSAGE_QUEUE_CONNECTION",
-      "name": "datapointchangequeue",
-      "queueName": "datapointchangequeue",
+      "name": "observationchangequeue",
+      "queueName": "observationchangequeue",
       "topicName": "outtopic"
     },
     {

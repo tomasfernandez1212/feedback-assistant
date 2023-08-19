@@ -4,7 +4,7 @@ from typing import Any
 import time
 
 
-class DataPoint(BaseModel):
+class Observation(BaseModel):
     text: str
     id: str = ""
     created_at: float = 0

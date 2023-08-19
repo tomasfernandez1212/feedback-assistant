@@ -1,21 +1,21 @@
 import openai
 from typing import List
-from src.data import Topic, DataPoint
+from src.data import Topic, Observation
 
 from src.llm.utils import unpack_function_call_arguments
 
 
 def generate_topics(
     feedback_item: str,
-    data_points: List[DataPoint],
+    observations: List[Observation],
     existing_topics: List[Topic],
 ) -> List[Topic]:
     """
-    Given a feedback item, a list of data points, and a list of existing topics, return a list of new topics to add.
+    Given a feedback item, a list of observations, and a list of existing topics, return a list of new topics to add.
     """
-    numbered_data_points = ""
-    for i, data_point in enumerate(data_points):
-        numbered_data_points += f"{i}. {data_point.text}\n"
+    numbered_observations = ""
+    for i, observation in enumerate(observations):
+        numbered_observations += f"{i}. {observation.text}\n"
 
     numbered_existing_topics = ""
     for i, topic_text in enumerate(existing_topics):
@@ -30,7 +30,7 @@ def generate_topics(
             },
             {
                 "role": "user",
-                "content": f"Here is a customer's feedback:\n\n{feedback_item}\n\nFrom this feedback, we have the following takeaways:\n\n{numbered_data_points}\n\nHere are the existing topics identified from other feedback items:\n\n{numbered_existing_topics}\n\nWhat topics do we need to add? Don't add topics if the existing topics already reasonably cover the feedback and its takeaways. When you do decide to add a topic, make sure the topic is neutral. For example, 'The service was super quick!!' is about the 'Speed of Service'",
+                "content": f"Here is a customer's feedback:\n\n{feedback_item}\n\nFrom this feedback, we have the following takeaways:\n\n{numbered_observations}\n\nHere are the existing topics identified from other feedback items:\n\n{numbered_existing_topics}\n\nWhat topics do we need to add? Don't add topics if the existing topics already reasonably cover the feedback and its takeaways. When you do decide to add a topic, make sure the topic is neutral. For example, 'The service was super quick!!' is about the 'Speed of Service'",
             },
         ],
         functions=[
