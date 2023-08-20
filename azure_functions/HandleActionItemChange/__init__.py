@@ -29,7 +29,7 @@ def main(msg: func.ServiceBusMessage) -> None:
         )
         storage.add_action_item_to_observations_edges(action_item, related_observations)
         logging.info(
-            f"Action Item: \n\n {action_item.text} \n\nContains Observations: {related_observations}\n\n"
+            f"Action Item: \n\n {action_item.text} \n\nAddresses Observations: {related_observations}\n\n"
         )
 
         logging.info("Infer related Topics")
