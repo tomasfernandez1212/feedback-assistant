@@ -274,6 +274,69 @@ def infer_topic_to_observations_connections(
     return related_observations  # type: ignore
 
 
+def infer_topic_to_action_items_connections(
+    topic: Topic,
+    action_items: List[ActionItem],
+) -> List[ActionItem]:
+    """
+    Given a single topic, and a list of action items, infer which subset of action items belong to the topic.
+    """
+
+    # Exit if there are no observations
+    if len(action_items) == 0:
+        return []
+
+    numbered_action_items = ""
+    for i, action_item in enumerate(action_items):
+        numbered_action_items += f"{i}. {action_item.text}\n"
+
+    response = openai.ChatCompletion.create(  # type: ignore
+        model="gpt-3.5-turbo-0613",
+        temperature=0.0,
+        messages=[
+            {
+                "role": "system",
+                "content": "You are an expert in customer service. Your task is to discern if a given action item directly discusses the specified topic. Ensure you look for clear, explicit, and literal mentions or indications of the topic within each action item. Avoid making indirect or tangential associations. For example, if the topic is 'Ambiance', and one action item is 'Adjust the lights so they are not too bright.', that's a direct mention. But if another action item is 'Lower the sweetness of the apple pie.', that does not explicitly discuss 'Ambiance' even if ambiance might influence the dining experience.",
+            },
+            {
+                "role": "user",
+                "content": f"For each of the following action items, report if the action item is talking about the topic '{topic.text}':\n\n{numbered_action_items}",
+            },
+        ],
+        functions=[
+            {
+                "name": "report_action_items",
+                "description": f"Use this to report whether each action item is talking about the topic '{topic.text}'.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "belongs_to": {
+                            "type": "array",
+                            "description": "A list of booleans. Do not add any comentary. Only report with booleans. For example, [true, false, true].",
+                            "items": {
+                                "type": "boolean",
+                                "description": f"Indicates whether the action item is talking about the topic of '{topic.text}'.",
+                            },
+                        }
+                    },
+                    "required": ["belongs_to"],
+                },
+            },
+        ],
+        function_call={"name": "report_action_items"},
+    )
+
+    booleans = unpack_function_call_arguments(response)["belongs_to"]  # type: ignore
+
+    # Convert the booleans to a list of action items
+    related_action_items: List[ActionItem] = []
+    for i, boolean in enumerate(booleans):
+        if boolean:
+            related_action_items.append(action_items[i])
+
+    return related_action_items  # type: ignore
+
+
 def infer_action_item_to_observations_connections(
     action_item: ActionItem,
     observations: List[Observation],
@@ -300,7 +363,7 @@ def infer_action_item_to_observations_connections(
             },
             {
                 "role": "user",
-                "content": f"For each of the following takeaways, report if the takeaway can be directly addressed by this action item: '{action_item.text}':\n\n{numbered_observations}",
+                "content": f"For each of the following takeaways, report if the takeaway can be directly addressed by this action item: '{action_item.text}':\n\nTAKEAWAYS:\n{numbered_observations}",
             },
         ],
         functions=[
@@ -335,3 +398,66 @@ def infer_action_item_to_observations_connections(
             related_observations.append(observations[i])
 
     return related_observations  # type: ignore
+
+
+def infer_action_item_to_topics_connections(
+    action_item: ActionItem,
+    topics: List[Topic],
+) -> List[Topic]:
+    """
+    Given a single action item, and a list of topics, infer which subset of topics are addressed by the action item.
+    """
+
+    # Exit if there are no topics
+    if len(topics) == 0:
+        return []
+
+    numbered_topics = ""
+    for i, topic in enumerate(topics):
+        numbered_topics += f"{i}. {topic.text}\n"
+
+    response = openai.ChatCompletion.create(  # type: ignore
+        model="gpt-3.5-turbo-0613",
+        temperature=0.0,
+        messages=[
+            {
+                "role": "system",
+                "content": "You are an expert in customer service. Your task is to discern if a given topic drawn from customers' feedback can be directly addressed by a provided action item.",
+            },
+            {
+                "role": "user",
+                "content": f"For each of the following topics, report if the topic can be directly addressed by this action item: '{action_item.text}':\n\nTOPICS:\n{numbered_topics}",
+            },
+        ],
+        functions=[
+            {
+                "name": "report_topics",
+                "description": f"Use this to report whether each topic can be directly addressed by this action item: '{action_item.text}'.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "addressed": {
+                            "type": "array",
+                            "description": "A list of booleans. Do not add any comentary. Only report with booleans. For example, [true, false, true].",
+                            "items": {
+                                "type": "boolean",
+                                "description": f"Indicates whether the topic can be directly addressed by the action item: '{action_item.text}'.",
+                            },
+                        }
+                    },
+                    "required": ["addressed"],
+                },
+            },
+        ],
+        function_call={"name": "report_topics"},
+    )
+
+    booleans = unpack_function_call_arguments(response)["addressed"]  # type: ignore
+
+    # Convert the booleans to a list of topics
+    related_topics: List[Topic] = []
+    for i, boolean in enumerate(booleans):
+        if boolean:
+            related_topics.append(topics[i])
+
+    return related_topics  # type: ignore

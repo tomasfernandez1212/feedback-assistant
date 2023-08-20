@@ -38,7 +38,7 @@ class TestHandleActionItemChange(unittest.TestCase):
                 id="Topic_ewaed",
             )
             action_item = ActionItem(
-                text="Ask your waiters to be more attentive.",
+                text="Train waiters to be more attentive.",
                 id="ActionItem_rfhwei",
             )
             storage.add_feedback_item_and_source(feedback_item, review)
