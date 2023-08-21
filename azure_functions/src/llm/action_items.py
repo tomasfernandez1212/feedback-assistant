@@ -31,7 +31,7 @@ def generate_action_items(
             },
             {
                 "role": "user",
-                "content": f"Here is a customer's feedback:\n\n{feedback_item}\n\nFrom this feedback, we have the following takeaways:\n\n{numbered_observations}\n\nHere are the existing action items we have in our backlog:\n\n{numbered_existing_action_items}\n\nWhat action items to we need to add to our backlog to address the takeaways. Don't add action items if the ones in the backlog already address the issue.",
+                "content": f"Here is a customer's feedback:\n\n{feedback_item}\n\nFrom this feedback, we have the following observations:\n\n{numbered_observations}\n\nHere are the existing action items we have in our backlog:\n\n{numbered_existing_action_items}\n\nWhat action items to we need to add to our backlog to address the observations. Don't add action items if the ones in the backlog already address the issue.",
             },
         ],
         functions=[

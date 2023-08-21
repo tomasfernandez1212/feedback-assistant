@@ -33,17 +33,17 @@ def infer_action_items_to_observations_connections(
         messages=[
             {
                 "role": "system",
-                "content": "You are an expert in customer service. Your task is to interpret customer's reviews, feedback, and conversations with us to infer which action items will help us address takeaways taken from a customer's feedback. ",
+                "content": "You are an expert in customer service. Your task is to interpret customer's reviews, feedback, and conversations with us to infer which action items will help us address observations taken from a customer's feedback. ",
             },
             {
                 "role": "user",
-                "content": f"Here is a customer's feedback:\n\n{feedback_item}\n\nFrom this feedback, we have the following takeaways:\n\n{numbered_observations}\n\nHere are the action items we have in our backlog:\n\n{numbered_action_items}\n\nFor each action item, report which takeaway(s) the action item helps to address.",
+                "content": f"Here is a customer's feedback:\n\n{feedback_item}\n\nFrom this feedback, we have the following observations:\n\n{numbered_observations}\n\nHere are the action items we have in our backlog:\n\n{numbered_action_items}\n\nFor each action item, report which observation(s) the action item helps to address.",
             },
         ],
         functions=[
             {
                 "name": "report_action_item_relationships",
-                "description": "This function is used report which action items address which takeaway. It accepts an array of action item objects.",
+                "description": "This function is used report which action items address which observation. It accepts an array of action item objects.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -112,13 +112,13 @@ def infer_observation_to_action_items_connections(
             },
             {
                 "role": "user",
-                "content": f"We have the following takeaway from a customer review:\n\n{observation.text}\n\nFor each of the following action items, report if the action item directly addresses the takeaway above:\n\n{numbered_action_items}",
+                "content": f"We have the following observation from a customer review:\n\n{observation.text}\n\nFor each of the following action items, report if the action item directly addresses the observation above:\n\n{numbered_action_items}",
             },
         ],
         functions=[
             {
                 "name": "report_action_item",
-                "description": "This function is used report whether each action item directly addresses the takeaway.",
+                "description": "This function is used report whether each action item directly addresses the observation.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -127,7 +127,7 @@ def infer_observation_to_action_items_connections(
                             "description": "A list of booleans. Do not add any comentary. Only report with booleans. For example, [true, false, true].",
                             "items": {
                                 "type": "boolean",
-                                "description": "Whether the action item directly addresses the takeaway.",
+                                "description": "Whether the action item directly addresses the observation.",
                             },
                         }
                     },
@@ -174,13 +174,13 @@ def infer_observation_to_topics_connections(
             },
             {
                 "role": "user",
-                "content": f"We have the following takeaway from a customer review:\n\n{observation.text}\n\nFor each of the following topics, report if the takeaway above belongs to the topic:\n\n{numbered_topics}",
+                "content": f"We have the following observation from a customer review:\n\n{observation.text}\n\nFor each of the following topics, report if the observation above belongs to the topic:\n\n{numbered_topics}",
             },
         ],
         functions=[
             {
                 "name": "report_topic",
-                "description": "This function is used report whether the takeaway belongs to each topic.",
+                "description": "This function is used report whether the observation belongs to each topic.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -189,7 +189,7 @@ def infer_observation_to_topics_connections(
                             "description": "A list of booleans. Do not add any comentary. Only report with booleans. For example, [true, false, true].",
                             "items": {
                                 "type": "boolean",
-                                "description": "Whether the takeaway belongs to the topic.",
+                                "description": "Whether the observation belongs to the topic.",
                             },
                         }
                     },
@@ -233,17 +233,17 @@ def infer_topic_to_observations_connections(
         messages=[
             {
                 "role": "system",
-                "content": "You are an expert in customer service. Your task is to discern if a given takeaway directly discusses the specified topic. Ensure you look for clear, explicit, and literal mentions or indications of the topic within each takeaway. Avoid making indirect or tangential associations. For example, if the topic is 'Ambiance', and one takeaway is 'The lights were too bright.', that's a direct mention. But if another takeaway is 'The apple pie was delicious.', that does not explicitly discuss 'Ambiance' even if ambiance might influence the dining experience.",
+                "content": "You are an expert in customer service. Your task is to discern if a given observation directly discusses the specified topic. Ensure you look for clear, explicit, and literal mentions or indications of the topic within each observation. Avoid making indirect or tangential associations. For example, if the topic is 'Ambiance', and one observation is 'The lights were too bright.', that's a direct mention. But if another observation is 'The apple pie was delicious.', that does not explicitly discuss 'Ambiance' even if ambiance might influence the dining experience.",
             },
             {
                 "role": "user",
-                "content": f"For each of the following takeaways, report if the takeaway is talking about the topic '{topic.text}':\n\n{numbered_observations}",
+                "content": f"For each of the following observations, report if the observation is talking about the topic '{topic.text}':\n\n{numbered_observations}",
             },
         ],
         functions=[
             {
-                "name": "report_takeaways",
-                "description": f"Use this to report whether each takeaway is talking about the topic '{topic.text}'.",
+                "name": "report_observations",
+                "description": f"Use this to report whether each observation is talking about the topic '{topic.text}'.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -252,7 +252,7 @@ def infer_topic_to_observations_connections(
                             "description": "A list of booleans. Do not add any comentary. Only report with booleans. For example, [true, false, true].",
                             "items": {
                                 "type": "boolean",
-                                "description": f"Indicates whether the takeaway is talking about the topic of '{topic.text}'.",
+                                "description": f"Indicates whether the observation is talking about the topic of '{topic.text}'.",
                             },
                         }
                     },
@@ -260,7 +260,7 @@ def infer_topic_to_observations_connections(
                 },
             },
         ],
-        function_call={"name": "report_takeaways"},
+        function_call={"name": "report_observations"},
     )
 
     booleans = unpack_function_call_arguments(response)["belongs_to"]  # type: ignore
@@ -359,17 +359,17 @@ def infer_action_item_to_observations_connections(
         messages=[
             {
                 "role": "system",
-                "content": "You are an expert in customer service. Your task is to discern if a given takeaway drawn from customers' feedback can be directly addressed by a provided action item.",
+                "content": "You are an expert in customer service. Your task is to discern if a given observation drawn from customers' feedback can be directly addressed by a provided action item.",
             },
             {
                 "role": "user",
-                "content": f"For each of the following takeaways, report if the takeaway can be directly addressed by this action item: '{action_item.text}':\n\nTAKEAWAYS:\n{numbered_observations}",
+                "content": f"For each of the following observations, report if the observation can be directly addressed by this action item: '{action_item.text}':\n\nobservationS:\n{numbered_observations}",
             },
         ],
         functions=[
             {
-                "name": "report_takeaways",
-                "description": f"Use this to report whether each takeaway can be directly addressed by this action item: '{action_item.text}'.",
+                "name": "report_observations",
+                "description": f"Use this to report whether each observation can be directly addressed by this action item: '{action_item.text}'.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -378,7 +378,7 @@ def infer_action_item_to_observations_connections(
                             "description": "A list of booleans. Do not add any comentary. Only report with booleans. For example, [true, false, true].",
                             "items": {
                                 "type": "boolean",
-                                "description": f"Indicates whether the takeaway can be directly addressed by the action item: '{action_item.text}'.",
+                                "description": f"Indicates whether the observation can be directly addressed by the action item: '{action_item.text}'.",
                             },
                         }
                     },
@@ -386,7 +386,7 @@ def infer_action_item_to_observations_connections(
                 },
             },
         ],
-        function_call={"name": "report_takeaways"},
+        function_call={"name": "report_observations"},
     )
 
     booleans = unpack_function_call_arguments(response)["addressed"]  # type: ignore

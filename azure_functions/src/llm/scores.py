@@ -97,7 +97,7 @@ def score_observation(
         },
         {
             "role": "user",
-            "content": f"""Here is something a customer said about their experience with us:\n{feedback_item}\n\nFrom this feedback, we have the following takeaway:\n{observation}\n\nFrom that takeaway, report the customer's scores on a continuous scale.""",
+            "content": f"""Here is something a customer said about their experience with us:\n{feedback_item}\n\nFrom this feedback, we have the following observation:\n{observation}\n\nFrom that observation, report the customer's scores on a continuous scale.""",
         },
     ]
 
