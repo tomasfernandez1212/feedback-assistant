@@ -18,9 +18,12 @@ def generate_action_items(
     for i, observation in enumerate(observations):
         numbered_observations += f"{i}. {observation.text}\n"
 
-    numbered_existing_action_items = ""
-    for i, action_item_text in enumerate(existing_action_items):
-        numbered_existing_action_items += f"{i}. {action_item_text.text}\n"
+    if len(existing_action_items) == 0:
+        numbered_existing_action_items = "[]"
+    else:
+        numbered_existing_action_items = ""
+        for i, action_item_text in enumerate(existing_action_items):
+            numbered_existing_action_items += f"{i}. {action_item_text.text}\n"
 
     response = openai.ChatCompletion.create(  # type: ignore
         model="gpt-3.5-turbo-0613",
