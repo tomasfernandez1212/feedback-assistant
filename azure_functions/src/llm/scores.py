@@ -69,13 +69,13 @@ def generate_score_properties_and_required(
             {
                 f"{score_type.value.var_name}_score": {
                     "type": "integer",
-                    "description": f"The customer's {score_type.value.name} Score regarding that statement. It is a relative score from {score_type.value.range_min} to {score_type.value.range_max} where {score_type.value.range_min} is {score_type.value.range_min_description}, {score_type.value.range_middle} is {score_type.value.range_middle_description}, and {score_type.value.range_max} is {score_type.value.range_max_description}.",
+                    "description": f"The customer's {score_type.value.name} Score ONLY about what is mentioned in THAT observation. It is a relative score from {score_type.value.range_min} to {score_type.value.range_max} where {score_type.value.range_min} is {score_type.value.range_min_description}, {score_type.value.range_middle} is {score_type.value.range_middle_description}, and {score_type.value.range_max} is {score_type.value.range_max_description}.",
                     "minimum": score_type.value.range_min,
                     "maximum": score_type.value.range_max,
                 },
                 f"{score_type.value.var_name}_explanation": {
                     "type": "string",
-                    "description": "An explanation for the provided score.",
+                    "description": "An explanation for why you decided on that score for that observation.",
                 },
             }
         )
@@ -97,7 +97,7 @@ def score_observation(
         },
         {
             "role": "user",
-            "content": f"""Here is something a customer said about their experience with us:\n{feedback_item}\n\nFrom this feedback, we have the following observation:\n{observation}\n\nFrom that observation, report the customer's scores on a continuous scale.""",
+            "content": f"""Here is a customer's complete feedback:\n{feedback_item}\n\nFrom this feedback, we have the following observation:\n{observation}\n\nFrom that observation, report the customer's scores on a continuous scale.""",
         },
     ]
 
