@@ -168,16 +168,12 @@ class Storage:
         topics = self.traverse(observation, determine_edge_label(Observation, Topic))
         return topics  # type: ignore
 
-    def get_observation_action_items(
-        self, observation: Observation
-    ) -> List[ActionItem]:
+    def get_observation_scores(self, observation: Observation) -> List[Score]:
         """
-        Gets the action items that the observation belongs to.
+        Gets the scores that the observation has.
         """
-        action_items = self.traverse(
-            observation, determine_edge_label(Observation, ActionItem)
-        )
-        return action_items  # type: ignore
+        scores = self.traverse(observation, determine_edge_label(Observation, Score))
+        return scores  # type: ignore
 
     def add_score(self, node: GraphNode, score: Score):
         """
@@ -209,8 +205,6 @@ class Storage:
         # Implicit Edges
         feedback_item = self.get_observation_parent_feedback_item(observation)
         self.connect_nodes(action_items, [feedback_item])
-        topics = self.get_observation_topics(observation)
-        self.connect_nodes(action_items, topics)
 
     def add_action_item_to_observations_edges(
         self, action_item: ActionItem, observations: List[Observation]
@@ -232,10 +226,26 @@ class Storage:
                 self.get_observation_parent_feedback_item(observation)
             )
         self.connect_nodes([action_item], feedback_items)
-        topics: List[Topic] = []
-        for observation in observations:
-            topics.extend(self.get_observation_topics(observation))
+
+    def add_action_item_to_topics_edges(
+        self, action_item: ActionItem, topics: List[Topic]
+    ):
+        """
+        Adds edges between single action item and multiple topics.
+        This is used when an action item is created, and we search for multiple topics it is related to.
+
+        By connecting this action item to these topics, we can infer other connections which we also handle here.
+        """
+
+        # Explicit Edges
         self.connect_nodes([action_item], topics)
+
+        # Implicit Edges
+        for topic in topics:
+            feedback_items = self.get_child_feedback_items_of_topic(topic)
+            self.connect_nodes([action_item], feedback_items)
+            observations = self.get_child_observations_of_topic(topic)
+            self.connect_nodes([action_item], observations)
 
     def add_observation_to_topics_edges(
         self, observation: Observation, topics: List[Topic]
@@ -253,8 +263,6 @@ class Storage:
         # Implicit Edges
         feedback_item = self.get_observation_parent_feedback_item(observation)
         self.connect_nodes(topics, [feedback_item])
-        action_items = self.get_observation_action_items(observation)
-        self.connect_nodes(topics, action_items)
 
     def add_topic_to_observations_edges(
         self, topic: Topic, observations: List[Observation]
@@ -276,10 +284,39 @@ class Storage:
                 self.get_observation_parent_feedback_item(observation)
             )
         self.connect_nodes([topic], feedback_items)
-        action_items: List[ActionItem] = []
-        for observation in observations:
-            action_items.extend(self.get_observation_action_items(observation))
+
+    def get_child_feedback_items_of_topic(self, topic: Topic) -> List[FeedbackItem]:
+        """
+        Gets the feedback items that the topic is a parent of.
+        """
+        feedback_items = self.traverse(topic, determine_edge_label(Topic, FeedbackItem))
+        return feedback_items  # type: ignore
+
+    def get_child_observations_of_topic(self, topic: Topic) -> List[Observation]:
+        """
+        Gets the observations that the topic is a parent of.
+        """
+        observations = self.traverse(topic, determine_edge_label(Topic, Observation))
+        return observations  # type: ignore
+
+    def add_topic_to_action_items_edges(
+        self, topic: Topic, action_items: List[ActionItem]
+    ):
+        """
+        Adds edges between single topic and multiple action items.
+        This is used when a topic is created, and we search for multiple action items it is related to.
+
+        By connecting this topic to these action items, we can infer other connections which we also handle here.
+        """
+
+        # Explicit Edges
         self.connect_nodes([topic], action_items)
+
+        # Implicit Edges
+        feedback_items = self.get_child_feedback_items_of_topic(topic)
+        self.connect_nodes(action_items, feedback_items)
+        observations = self.get_child_observations_of_topic(topic)
+        self.connect_nodes(action_items, observations)
 
     def add_topic(self, topic: Topic):
         """

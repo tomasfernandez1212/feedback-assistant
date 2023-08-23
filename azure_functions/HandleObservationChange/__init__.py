@@ -10,6 +10,8 @@ from src.llm.connections import (
     infer_observation_to_topics_connections,
 )
 
+from src.llm.action_items import check_needs_action
+
 
 def main(msg: func.ServiceBusMessage) -> None:
     logging.info("INIT: Unpacking Request Body")
@@ -19,18 +21,25 @@ def main(msg: func.ServiceBusMessage) -> None:
     with Storage() as storage:
         logging.info(f"Getting Observation with ID: {id}")
         observation = storage.get_node(id, Observation)
+        scores = storage.get_observation_scores(observation)
 
-        logging.info("Infer related Action Items")
-        existing_action_items, scores = storage.search_semantically(  # type: ignore
-            search_for=ActionItem, from_text=observation.text, top_k=10, min_score=0.0
-        )
-        related_action_items = infer_observation_to_action_items_connections(
-            observation, existing_action_items
-        )
-        storage.add_observation_to_action_items_edges(observation, related_action_items)
-        logging.info(
-            f"Observation: \n\n {observation.text} \n\nAddressed by Action Items: {related_action_items}\n\n"
-        )
+        if check_needs_action(scores):
+            logging.info("Infer related Action Items")
+            existing_action_items, scores = storage.search_semantically(  # type: ignore
+                search_for=ActionItem,
+                from_text=observation.text,
+                top_k=10,
+                min_score=0.0,
+            )
+            related_action_items = infer_observation_to_action_items_connections(
+                observation, existing_action_items
+            )
+            storage.add_observation_to_action_items_edges(
+                observation, related_action_items
+            )
+            logging.info(
+                f"Observation: \n\n {observation.text} \n\nAddressed by Action Items: {related_action_items}\n\n"
+            )
 
         logging.info("Infer related Topics")
         existing_topics, scores = storage.search_semantically(  # type: ignore

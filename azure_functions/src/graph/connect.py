@@ -188,10 +188,8 @@ class GraphConnection:
         for attempt in range(MAX_RETRIES):
             try:
                 query = f"g.V('{from_node.id}').addE('{edge_label}').to(g.V('{to_node.id}'))"
-                logging.info(f"Attempt: {attempt + 1} at adding edge.")
                 result = self.submit_query(query)  # type: ignore
                 if len(result) == 1:  # type: ignore
-                    logging.info("Successfully added edge.")
                     break  # successfully added this edge
             except:
                 if attempt < MAX_RETRIES - 1:  # i.e. not the last attempt
