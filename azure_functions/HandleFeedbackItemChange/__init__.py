@@ -54,6 +54,9 @@ def main(msg: func.ServiceBusMessage) -> None:
         )
         for new_action_item in new_action_items:
             storage.add_action_item(new_action_item)
+        logging.info(
+            f"Feedback Item {feedback_item}\n\nNew Action Items: {new_action_items}\n\n"
+        )
 
         logging.info("TOPICS: Generating new topics and adding to storage")
         existing_topics, scores = storage.search_semantically(
@@ -62,5 +65,6 @@ def main(msg: func.ServiceBusMessage) -> None:
         new_topics = generate_topics(feedback_item.text, observations, existing_topics)
         for new_topic in new_topics:
             storage.add_topic(new_topic)
+        logging.info(f"Feedback Item {feedback_item}\n\nNew Topics: {new_topics}\n\n")
 
     logging.info("DONE: Finished processing.")
