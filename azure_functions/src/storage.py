@@ -168,6 +168,13 @@ class Storage:
         topics = self.traverse(observation, determine_edge_label(Observation, Topic))
         return topics  # type: ignore
 
+    def get_observation_scores(self, observation: Observation) -> List[Score]:
+        """
+        Gets the scores that the observation has.
+        """
+        scores = self.traverse(observation, determine_edge_label(Observation, Score))
+        return scores  # type: ignore
+
     def add_score(self, node: GraphNode, score: Score):
         """
         Adds score for node, but also adds edges between score and node being scored.
