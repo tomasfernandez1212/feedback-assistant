@@ -30,7 +30,7 @@ def generate_topics(
             },
             {
                 "role": "user",
-                "content": f"Here is a customer's feedback:\n\n{feedback_item}\n\nFrom this feedback, we have the following takeaways:\n\n{numbered_observations}\n\nHere are the existing topics identified from other feedback items:\n\n{numbered_existing_topics}\n\nWhat topics do we need to add? Don't add topics if the existing topics already reasonably cover the feedback and its takeaways. When you do decide to add a topic, make sure the topic is neutral. For example, 'The service was super quick!!' is about the 'Speed of Service'",
+                "content": f"Here is a customer's feedback:\n\n{feedback_item}\n\nFrom this feedback, we have the following observations:\n\n{numbered_observations}\n\nHere are the existing topics identified from other feedback items:\n\n{numbered_existing_topics}\n\nWhat topics do we need to add? Don't add topics if the existing topics already reasonably cover the feedback and its observations. When you do decide to add a topic, make sure the topic is neutral. For example, 'The service was super quick!!' is about the 'Speed of Service'",
             },
         ],
         functions=[
